@@ -1,0 +1,12 @@
+=== [feb.19] ===
+This is a fork of mar4h-blog-post1 branch https://github.com/mark4h/hi35xx-buildroot.git tweaked for VStarCam CW7824WIP
+
+Once you have cloned the dir, jump in and
+
+'''
+make hi3518vstarcam_defconfig
+make
+'''
+
+=== previous ===
+This is a fork of https://github.com/hi35xx/hi35xx-buildroot with an updated default configuration for the HI3518 V100 and Linux 3.0 to match those used in the blog post at https://mark4h.blogspot.com/2017/07/hi3518-camera-module-part-1-replacing.html

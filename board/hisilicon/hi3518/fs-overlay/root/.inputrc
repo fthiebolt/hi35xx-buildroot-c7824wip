@@ -1,0 +1,5 @@
+# Various variables
+set show-all-if-ambiguous on
+set mark-symlinked-directories on
+set completion-ignore-case on
+

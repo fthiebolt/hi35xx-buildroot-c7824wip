@@ -1,0 +1,66 @@
+#!/bin/sh
+
+#exec &> >(tee -a /var/log/udhcpc.log)
+exec 2> /var/log/udhcpc.log
+exec 1>&2
+
+[ -z "$1" ] && echo "Error: should be called from udhcpc" && exit 1
+
+NTP_CONF="/etc/ntp.conf"
+[ -e $NTP_CONF ] || touch $NTP_CONF
+
+echo -e "=== $(basename $0) ===================================="
+echo -e "Nb input params = $#, \$1='$1', \$2='$2'"
+env
+
+
+case "$1" in
+    deconfig|leasefail|nak)
+        # nothing to do at ntp client level
+        ;;
+
+    renew|bound)
+        TMPFILE=$(mktemp)
+
+        if [ "X${ntpsrv}" != "X" ]; then
+            # server(s) provided by dhcp client
+            for srv in ${ntpsrv}; do
+                echo -e "server ${srv}" >> $TMPFILE
+            done
+        elif [ "X${domain}" != "X" -a "X${domain}" != "Xlocalhost" -a "X${domain}" != "Xlocaldomain" ]; then
+            # server determined according to domain name
+            _domain=`echo $domain | cut -d'.' -f 2-`
+            echo $_domain | grep -q -e'.'
+            if [ $? -eq 0 ]; then
+                echo -e "server $_domain" >> $TMPFILE
+            else
+                echo -e "server $domain" >> $TMPFILE
+            fi
+        else
+            # defaults servers
+            echo -e "server pool.ntp.org"
+        fi
+
+        # do we need to apply a new config ?
+        diff $TMPFILE $NTP_CONF > /dev/null
+        if [ $? -ne 0 ]; then
+            # files differ ...
+            cat $TMPFILE > $NTP_CONF
+            echo -e "Resarting ntpd with new config ..."
+            pkill -9 ntpd >& /dev/null
+            ntpd
+        fi
+		rm -f $TMPFILE
+
+		;;
+
+    *)
+        echo -e "#WARNING: unknown case '$1' ..." >&2
+        ;;
+
+esac
+
+echo -e "============================================"
+
+return
+
