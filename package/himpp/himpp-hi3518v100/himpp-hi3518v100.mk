@@ -121,6 +121,20 @@ $(eval $(call add_sample,VENC,venc,sample_venc))
 $(eval $(call add_sample,VIO,vio,sample_vio))
 
 
+# --- [feb.19] added build option for tools
+
+###############################################################################
+# build tools
+###############################################################################
+
+ifeq ($(BR2_PACKAGE_HIMPP_TOOLS),y)
+	HIMPP_HI3518V100_BUILD_CMDS += $(call himpp_build,tools)
+#	PROGRAM_TO_INSTALL += $(patsubst %,tools/$(2)/%,$(3))
+endif
+
+# ---
+
+
 HIMPP_PREFIX = $(call qstrip,$(BR2_PACKAGE_HIMPP_PREFIX))
 
 extdrv-header-$(BR2_PACKAGE_HIMPP_EXTDRV_TW2865) += tw2865/tw2865.h
