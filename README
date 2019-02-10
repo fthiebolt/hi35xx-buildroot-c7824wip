@@ -4,7 +4,7 @@ This is a fork of mar4h-blog-post1 branch https://github.com/mark4h/hi35xx-build
 Once you have cloned the dir, jump in and
 
 '''
-make hi3518vstarcam_defconfig
+make hi3518-c7824wip_defconfig
 make
 '''
 
