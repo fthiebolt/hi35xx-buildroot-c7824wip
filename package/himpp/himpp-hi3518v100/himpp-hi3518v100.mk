@@ -129,7 +129,6 @@ $(eval $(call add_sample,VIO,vio,sample_vio))
 
 ifeq ($(BR2_PACKAGE_HIMPP_TOOLS),y)
 	HIMPP_HI3518V100_BUILD_CMDS += $(call himpp_build,tools)
-#	PROGRAM_TO_INSTALL += $(patsubst %,tools/$(2)/%,$(3))
 endif
 
 # ---
@@ -218,12 +217,22 @@ define HIMPP_TARGET_INSTALL_PROGRAMS
 	done
 endef
 
+# [feb.19] added support for tools (i.e demo) install
+define HIMPP_TARGET_INSTALL_TOOLS
+	if [ "X$(BR2_PACKAGE_HIMPP_TOOLS)" = "Xy" ]; then \
+		mkdir -p $(TARGET_DIR)$(HIMPP_PREFIX)/himpp-tools; \
+		cp -a $(@D)/tools/* $(TARGET_DIR)$(HIMPP_PREFIX)/himpp-tools; \
+	fi
+endef
+# ---
+
 define HIMPP_HI3518V100_INSTALL_TARGET_CMDS
 	$(HIMPP_TARGET_INSTALL_MPPDRV)
 	$(HIMPP_TARGET_INSTALL_EXTDRV)
 	$(HIMPP_TARGET_INSTALL_SCRIPTS)
 	$(HIMPP_TARGET_INSTALL_LIBRARIES)
 	$(HIMPP_TARGET_INSTALL_PROGRAMS)
+	$(HIMPP_TARGET_INSTALL_TOOLS)
 	$(INSTALL) -m 0755 -D package/himpp/himpp-hi3518v100/load3518.sh \
 	    $(MPPDRV_TARGET_DIR)/load3518.sh
 endef
