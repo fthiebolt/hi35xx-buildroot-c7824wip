@@ -134,11 +134,11 @@ endmenu
 #
 # [feb.19] added support for tools building
 config BR2_PACKAGE_HIMPP_TOOLS
-	bool "Build MPP2 tools"
+	bool "Build MPP2 tools (/opt/himpp-tools)"
     default n
     depends on BR2_PACKAGE_HIMPP_HI3518V100
 	help
-	  Build tools (eg. vi_bayerdump) for HiMPP2 for Hi3518
+	  Build tools (eg. vi_bayerdump) for HiMPP2 for Hi3518. Installed in '/opt/himpp-tools' directory
 
 
 

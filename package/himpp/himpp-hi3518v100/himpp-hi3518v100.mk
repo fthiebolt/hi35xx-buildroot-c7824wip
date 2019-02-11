@@ -220,11 +220,11 @@ endef
 # [feb.19] added support for tools (i.e demo) install
 define HIMPP_TARGET_INSTALL_TOOLS
 	if [ "X$(BR2_PACKAGE_HIMPP_TOOLS)" = "Xy" ]; then \
-		mkdir -p $(TARGET_DIR)$(HIMPP_PREFIX)/himpp-tools; \
+		mkdir -p $(TARGET_DIR)/opt/himpp-tools; \
 		for f in $(@D)/tools/*; do \
 			if [[ -x $$f || $$f == *.cfg  ]]; then \
 	  			t=`basename $$f`; \
-				cp -a $$f $(TARGET_DIR)$(HIMPP_PREFIX)/himpp-tools/$$t; \
+				cp -a $$f $(TARGET_DIR)/opt/himpp-tools/$$t; \
 			fi \
 		done \
 	fi
