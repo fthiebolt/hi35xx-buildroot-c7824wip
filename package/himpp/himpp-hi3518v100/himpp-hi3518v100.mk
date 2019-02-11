@@ -221,7 +221,12 @@ endef
 define HIMPP_TARGET_INSTALL_TOOLS
 	if [ "X$(BR2_PACKAGE_HIMPP_TOOLS)" = "Xy" ]; then \
 		mkdir -p $(TARGET_DIR)$(HIMPP_PREFIX)/himpp-tools; \
-		cp -a $(@D)/tools/* $(TARGET_DIR)$(HIMPP_PREFIX)/himpp-tools; \
+		for f in $(@D)/tools/*; do \
+			if [[ -x $$f || $$f == *.cfg  ]]; then \
+	  			t=`basename $$f`; \
+				cp -a $$f $(TARGET_DIR)$(HIMPP_PREFIX)/himpp-tools/$$t; \
+			fi \
+		done \
 	fi
 endef
 # ---
