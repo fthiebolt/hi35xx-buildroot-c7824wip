@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+# myOpenCam service
+#
+
+MYOPENCAM_PREFIX=/opt
+SENSOR_TYPE=$(fw_printenv sensor_type 2>/dev/null)
+SENSOR_TYPE=${SENSOR_TYPE:12}
+SENSOR_TYPE=${SENSOR_TYPE:-ov9712}
+
+start() {
+    (
+      echo -n "Starting myOpenCam: "
+      cd ${MYOPENCAM_PREFIX}
+      ./myopencam.sh --start ${SENSOR_TYPE}
+      [ $? = 0 ] && echo "OK" || echo "FAIL"
+    )
+}
+
+stop() {
+    (
+      echo -n "Stopping myOpenCam: "
+      cd ${MYOPENCAM_PREFIX}
+      ./myopencam.sh --stop
+      [ $? = 0 ] && echo "OK" || echo "FAIL"
+    )
+}
+
+case "$1" in
+    start)
+	start
+	;;
+    stop)
+	stop
+	;;
+    restart|reload)
+	stop
+	start
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

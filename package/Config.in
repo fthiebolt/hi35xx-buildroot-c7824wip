@@ -1824,4 +1824,10 @@ menu "Text editors and viewers"
 	source "package/vim/Config.in"
 endmenu
 
+# [feb.19] added myOpenCam target
+menu "myOpenCam"
+    source "package/myopencam/Config.in"
 endmenu
+
+endmenu
+
