@@ -7,12 +7,19 @@ config BR2_PACKAGE_MYOPENCAM_PREFIX
 	help
 	  Prefix to install myOpenCam on the target file system.
 
+config BR2_PACKAGE_MYOPENCAM
+    bool "main app."
+    default y
+    depends on BR2_PACKAGE_HIMPP_HI3518V100
+    help
+        myOpenCam main application.
+
 config BR2_PACKAGE_MYOPENCAM_TESTS
     bool "[dev] tests apps."
     default n
     depends on BR2_PACKAGE_HIMPP_HI3518V100
     help
-        myOpenCam development applications.
+        myOpenCam tests applications.
 
 # ---
 

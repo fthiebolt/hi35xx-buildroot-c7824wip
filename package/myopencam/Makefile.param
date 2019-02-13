@@ -1,0 +1,32 @@
+# Makefile.param 
+# Only global variable should be defined here.
+# All the variables must be used as "export" and "?=".
+# Otherwise, there will be some errors, when Makefile.param is nested.
+
+# Use this file as the following sample
+# ifeq ($(PARAM_FILE), )
+#     PARAM_FILE:=../Makefile.param
+#     include $(PARAM_FILE)
+# endif
+
+export ARCH=arm
+export LIBC?=uclibc
+
+ifeq ($(LIBC), )
+$(error LIBC not defined! Please check!)
+endif
+
+# Get the local SDK_ROOT path or RELEASE_ROOT path by PARAM_FILE.
+# PARAM_FILE is configed at Makefile before include this file
+export PARAM_FILE
+
+export CC:=$(CROSS)gcc
+export AR:=$(CROSS)ar
+
+export MYOPENCAM_CFLAGS:= -Wall
+MYOPENCAM_CFLAGS += -g
+
+#export REL_INC := $(REL_DIR)/include
+#export REL_LIB := $(REL_DIR)/lib
+
+# End!!
