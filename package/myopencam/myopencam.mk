@@ -19,6 +19,9 @@ MYOPENCAM_MAKE_OPTS += CROSS=$(TARGET_CROSS)
 MYOPENCAM_MAKE_OPTS += CROSS_COMPILE=$(TARGET_CROSS)
 MYOPENCAM_MAKE_OPTS += LINUX_ROOT=$(LINUX_DIR)
 
+MYOPENCAM_MAKE_OPTS += INC_STAGING_DIR=$(STAGING_DIR)/usr/include/$(BR2_PACKAGE_HIMPP_CHIP)mpp
+MYOPENCAM_MAKE_OPTS += LIB_STAGING_DIR=$(STAGING_DIR)/usr/lib
+
 #
 # --- extract / pull / build area
 
@@ -32,7 +35,7 @@ define my_build
     ( cd $(@D)/$(1) && $(MAKE1) $(MYOPENCAM_MAKE_OPTS) ) || exit 1;
 endef
 
-define MYOPENCAM_BUILD_CMDS
+#define MYOPENCAM_BUILD_CMDS
 #    ( cd $(@D)/lib; \
 #    for f in *.a; do \
 #      $(TARGET_CC) -shared -fPIC -o $${f%.a}.so \
@@ -40,7 +43,7 @@ define MYOPENCAM_BUILD_CMDS
 #      || exit 1; \
 #    done; \
 #    );
-endef
+#endef
 
 # ---
 #
@@ -82,7 +85,7 @@ endif
 ###############################################################################
 
 ifeq ($(BR2_PACKAGE_MYOPENCAM_TESTS),y)
-    #MYOPENCAM_BUILD_CMDS += $(call my_build,tests)
+    MYOPENCAM_BUILD_CMDS += $(call my_build,tests)
 endif
 
 # ---
