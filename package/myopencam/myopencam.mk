@@ -8,7 +8,7 @@ MYOPENCAM_SITE = $(TOPDIR)/package/myopencam
 MYOPENCAM_SITE_METHOD = local
 #MYOPENCAM_SOURCE = myopencam-$(MYOPENCAM_VERSION).tgz
 MYOPENCAM_INSTALL_STAGING = NO
-MYOPENCAM_DEPENDENCIES = himpp-hi3518v100
+MYOPENCAM_DEPENDENCIES = himpp-hi3518v100 linux
 
 MYOPENCAM_PREFIX = $(call qstrip,$(BR2_PACKAGE_MYOPENCAM_PREFIX))
 
@@ -53,10 +53,19 @@ endef
 # kernel drivers
 ###############################################################################
 
-ifeq ($(BR2_PACKAGE_MYOPENCAM),y)
-    #MYOPENCAM_BUILD_CMDS += $(call my_build,kdriver)
-	KDRIVER_TO_INSTALL = $(shell cd $(@D)/kdriver && find -name \*.ko)
-	KDRIVER_TARGET_DIR = $(TARGET_DIR)$(MYOPENCAM_PREFIX)/kdriver
+ifeq ($(BR2_PACKAGE_MYOPENCAM_MODULES),y)
+	MYOPENCAM_MODULE_SUBDIRS = \
+		kdriver/mymotogpio \
+		kdriver/wtdg \
+		kdriver/rtc
+
+	MYOPENCAM_MODULE_MAKE_OPTS = \
+		KERNELDIR=$(LINUX_DIR), \
+    	KVERSION=$(LINUX_VERSION_PROBED)
+
+	# --- OLD
+	#KDRIVER_TO_INSTALL = $(shell cd $(@D)/kdriver && find -name \*.ko)
+	#KDRIVER_TARGET_DIR = $(TARGET_DIR)$(MYOPENCAM_PREFIX)/kdriver
 endif
 
 
@@ -154,5 +163,7 @@ define MYOPENCAM_INSTALL_INIT_SYSV
         $(TARGET_DIR)/etc/init.d/S90myopencam
 endef
 
+
+$(eval $(kernel-module))
 $(eval $(generic-package))
 

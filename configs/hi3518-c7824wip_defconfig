@@ -1,8 +1,12 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Buildroot 2017.02.4-g25121c064-dirty Configuration
+# Buildroot 2017.02.4-g00da0d1-dirty Configuration
 #
 BR2_HAVE_DOT_CONFIG=y
+BR2_HOST_GCC_AT_LEAST_4_5=y
+BR2_HOST_GCC_AT_LEAST_4_6=y
+BR2_HOST_GCC_AT_LEAST_4_7=y
+BR2_HOST_GCC_AT_LEAST_4_8=y
 
 #
 # Target options
@@ -130,6 +134,7 @@ BR2_STRIP_EXCLUDE_DIRS=""
 # BR2_OPTIMIZE_3 is not set
 # BR2_OPTIMIZE_G is not set
 BR2_OPTIMIZE_S=y
+# BR2_GOOGLE_BREAKPAD_ENABLE is not set
 BR2_SSP_NONE=y
 # BR2_SSP_REGULAR is not set
 # BR2_SSP_STRONG is not set
@@ -521,10 +526,7 @@ BR2_PACKAGE_MPLAYER_ARCH_SUPPORTS=y
 # BR2_PACKAGE_FIO is not set
 # BR2_PACKAGE_GDB is not set
 BR2_PACKAGE_GOOGLE_BREAKPAD_ARCH_SUPPORTS=y
-
-#
-# google-breakpad requires a glibc or uClibc toolchain w/ wchar, thread, C++, gcc >= 4.8
-#
+# BR2_PACKAGE_GOOGLE_BREAKPAD is not set
 # BR2_PACKAGE_IOZONE is not set
 # BR2_PACKAGE_KEXEC is not set
 # BR2_PACKAGE_KTAP is not set
@@ -714,10 +716,7 @@ BR2_PACKAGE_CMAKE_ARCH_SUPPORTS=y
 #
 # BR2_PACKAGE_CEGUI06 is not set
 # BR2_PACKAGE_DIRECTFB is not set
-
-#
-# efl needs a toolchain w/ C++, dynamic library, gcc >= 4.7, threads, wchar
-#
+# BR2_PACKAGE_EFL is not set
 # BR2_PACKAGE_FBDUMP is not set
 # BR2_PACKAGE_FBGRAB is not set
 # BR2_PACKAGE_FBSET is not set
@@ -1019,10 +1018,7 @@ BR2_PACKAGE_LUAJIT_ARCH_SUPPORTS=y
 # BR2_PACKAGE_MOARVM is not set
 BR2_PACKAGE_MONO_ARCH_SUPPORTS=y
 # BR2_PACKAGE_MONO is not set
-
-#
-# nodejs needs a toolchain w/ C++, dynamic library, threads, gcc >= 4.8, wchar
-#
+# BR2_PACKAGE_NODEJS is not set
 # BR2_PACKAGE_PERL is not set
 # BR2_PACKAGE_PHP is not set
 # BR2_PACKAGE_PYTHON is not set
@@ -2169,6 +2165,18 @@ BR2_PACKAGE_XVISOR_ARCH_SUPPORTS=y
 # BR2_PACKAGE_VIM is not set
 
 #
+# myOpenCam
+#
+
+#
+# myOpenCam project for C7824WIP
+#
+BR2_PACKAGE_MYOPENCAM_PREFIX="/opt/myopencam"
+BR2_PACKAGE_MYOPENCAM=y
+BR2_PACKAGE_MYOPENCAM_MODULES=y
+BR2_PACKAGE_MYOPENCAM_TESTS=y
+
+#
 # Filesystem images
 #
 # BR2_TARGET_ROOTFS_AXFS is not set
@@ -2231,10 +2239,7 @@ BR2_PACKAGE_HOST_GO_CGO_LINKING_SUPPORTS=y
 # BR2_PACKAGE_HOST_JSMIN is not set
 # BR2_PACKAGE_HOST_LPC3250LOADER is not set
 # BR2_PACKAGE_HOST_LTTNG_BABELTRACE is not set
-
-#
-# mfgtools needs host gcc >= 4.8
-#
+# BR2_PACKAGE_HOST_MFGTOOLS is not set
 # BR2_PACKAGE_HOST_MKE2IMG is not set
 # BR2_PACKAGE_HOST_MKPASSWD is not set
 # BR2_PACKAGE_HOST_MTD is not set

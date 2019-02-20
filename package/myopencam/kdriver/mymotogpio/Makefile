@@ -3,10 +3,11 @@
 #		include $(PARAM_FILE)
 #endif
 
-EXTRA_CFLAGS += -DHIDEBUG -g
+# kernel module as 'module' (i.e -m for module)
+obj-m := mymotogpio.o
 
-obj-m := wdt.o
-wdt-y += hi_wdt.o 
+# kernel module as bultin (i.e -y for yes)
+#mymotogpio-y += mymotogpio.o 
 
 ccflags-y := -I$(PWD)/ -DDEBUG -g -std=gnu99 -Wno-declaration-after-statement
 
@@ -16,9 +17,9 @@ ccflags-y := -I$(PWD)/ -DDEBUG -g -std=gnu99 -Wno-declaration-after-statement
 all:	
 	echo -e "\e[0;32;1m--Compiling 'wtdg'... \e[0;36;1m"
 	echo -e "\e[0m" 
-	$(MAKE) -C $(LINUX_ROOT) M=$(PWD) modules 
+	$(MAKE) -C '$(LINUX_DIR)' M='$(PWD)' modules
 
 clean:
-	$(MAKE) -C $(LINUX_ROOT) M=$(PWD) clean 
+	$(MAKE) -C '$(LINUX_ROOT)' M='$(PWD)' clean 
 	rm -rf *.ko
 

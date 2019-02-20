@@ -104,7 +104,9 @@ typedef union {
 #define SPI_WRITE		(0)
 #define SPI_READ		(1)
 
+/* [feb.19] already defined in arch/arm/mach-hi3518/include/mach/irqs.h:7:0:
 #define RTC_IRQ			(2)	
+*/
 
 /* RTC REG */
 #define RTC_10MS_COUN	0x00

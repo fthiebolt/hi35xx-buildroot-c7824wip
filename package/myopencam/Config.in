@@ -14,8 +14,15 @@ config BR2_PACKAGE_MYOPENCAM
     help
         myOpenCam main application.
 
+config BR2_PACKAGE_MYOPENCAM_MODULES
+    bool "kernel modules"
+    default y
+    depends on BR2_LINUX_KERNEL
+    help
+        myOpenCam kernel modules addons. Note that already compiles modules will get installed anyway.
+
 config BR2_PACKAGE_MYOPENCAM_TESTS
-    bool "[dev] tests apps."
+    bool "tests apps."
     default n
     depends on BR2_PACKAGE_HIMPP_HI3518V100
     help
