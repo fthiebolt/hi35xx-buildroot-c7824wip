@@ -7,8 +7,6 @@ EXTRA_CFLAGS += -DHIDEBUG -g
 
 # built as a Module (i.e xxx-m)
 obj-m := hi_wdt.o
-# our module depends on list ob objects
-myobjects-y += hi_wdt.o 
 
 ccflags-y := -I$(PWD)/ -DDEBUG -g -std=gnu99 -Wno-declaration-after-statement
 

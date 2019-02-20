@@ -13,8 +13,7 @@ EXTRA_CFLAGS += -DHIDEBUG -g
 #
 # as a module (i.e xxx-m for module)
 obj-m := hi_rtc.o
-# objects our module depends on
-myobjects-y += hi_rtc.o
+
 
 ccflags-y := -I$(PWD)/ -DDEBUG -g -std=gnu99 -Wno-declaration-after-statement
 

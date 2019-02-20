@@ -1,3 +1,9 @@
+#######################################################################
+#
+# Tests apps.
+#
+# [feb.19] added rtc_test from kdriver/rtc/rtc_test
+#
 ifeq ($(PARAM_FILE), )
      PARAM_FILE:=../Makefile.param
      include $(PARAM_FILE)
@@ -121,11 +127,15 @@ TARGET := $(OBJ:%.o=%)
 
 .PHONY : clean all $(SNS)
 
-all: $(TARGET)
+all: $(TARGET) rtc_test
 
 $(TARGET):%:%.o 
 	$(CC) $(CFLAGS)  -o $@ $^ $(LIBS) $(AUDIO_LIBS) -Wl,-gc-sections
 	@rm *.o
+
+rtc_test:
+	$(CC) $(CFLAGS) -I./ -o $@ ../kdriver/rtc/rtc_test.c $(LIBS) $(AUDIO_LIBS) -Wl,-gc-sections
+
 clean:
 	@rm -f $(TARGET)
 	@rm -f $(OBJ)

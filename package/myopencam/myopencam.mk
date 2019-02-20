@@ -54,6 +54,7 @@ endef
 ###############################################################################
 
 ifeq ($(BR2_PACKAGE_MYOPENCAM_MODULES),y)
+	# Kernel modules to build
 	MYOPENCAM_MODULE_SUBDIRS = \
 		kdriver/mymotogpio \
 		kdriver/wtdg \
@@ -62,10 +63,12 @@ ifeq ($(BR2_PACKAGE_MYOPENCAM_MODULES),y)
 	MYOPENCAM_MODULE_MAKE_OPTS = \
 		KERNELDIR=$(LINUX_DIR), \
     	KVERSION=$(LINUX_VERSION_PROBED)
+endif
 
-	# --- OLD
-	#KDRIVER_TO_INSTALL = $(shell cd $(@D)/kdriver && find -name \*.ko)
-	#KDRIVER_TARGET_DIR = $(TARGET_DIR)$(MYOPENCAM_PREFIX)/kdriver
+ifeq ($(BR2_PACKAGE_MYOPENCAM),y)
+	# install ONLY existing .ko modules from kdriver folder level
+	KDRIVER_TO_INSTALL = $(shell cd $(@D)/kdriver && find -name \*.ko)
+	KDRIVER_TARGET_DIR = $(TARGET_DIR)$(MYOPENCAM_PREFIX)/kdriver
 endif
 
 
@@ -138,7 +141,7 @@ endef
 define MYOPENCAM_TARGET_INSTALL_TESTS
     if [ "X$(BR2_PACKAGE_MYOPENCAM_TESTS)" = "Xy" ]; then \
         mkdir -p $(TARGET_DIR)/$(MYOPENCAM_PREFIX)/tests; \
-        for f in $(@D)/tests/*; do \
+        for f in $(@D)/tests/* $(TESTS_TO_INSTALL); do \
             if [[ -x $$f || $$f == *.cfg ]]; then \
                 t=`basename $$f`; \
                 cp -a $$f $(TARGET_DIR)/$(MYOPENCAM_PREFIX)/tests/$$t; \
