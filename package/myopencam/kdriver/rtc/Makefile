@@ -13,22 +13,28 @@ EXTRA_CFLAGS += -DHIDEBUG -g
 #
 # as a module (i.e xxx-m for module)
 obj-m := hi_rtc.o
-# ... built-in kernel (i.e xxx-y for 'yes')
-hirtc-y := hi_rtc.o
+# objects our module depends on
+myobjects-y += hi_rtc.o
 
-ccflags-y := -I$(@D)/include -I$(PWD)/ -DDEBUG -g -std=gnu99 -Wno-declaration-after-statement
+ccflags-y := -I$(PWD)/ -DDEBUG -g -std=gnu99 -Wno-declaration-after-statement
 
 
-.PHONY: all test clean
+.PHONY: all test clean printvars
 
-all: test
-	@echo -e "\e[0;32;1m--Compiling 'rtc'...\e[0;36;1m"
-	@echo -e "\e[0m"
-	@echo $* = $($*)
-	$(MAKE) -C $(LINUX_ROOT) M=$(PWD) modules
+all: test printvars
+	@echo "Compiling ..."
+	# [feb.19] kernel-module from buildroot does not call us
+	#@echo -e "\e[0;32;1m--Compiling 'rtc'...\e[0;36;1m"
+	#@echo -e "\e[0m"
+	#$(MAKE) -C $(LINUX_ROOT) M=$(PWD) modules
+
+printvars:
+	@$(foreach V,$(sort $(.VARIABLES)),
+		$(if $(filter-out environment% default automatic,
+			$(origin $V)),$(warning $V=$($V) ($(value $V)))))
 
 test: rtc_test.o
-	$(CROSS_COMPILE)gcc $(CFLAGS) -o rtc_test rtc_test.c -Wl,-gc-sections
+	$(CC) $(CFLAGS) -o rtc_test rtc_test.c -Wl,-gc-sections
 
 clean:
 	$(MAKE) -C $(LINUX_ROOT) M=$(PWD) clean

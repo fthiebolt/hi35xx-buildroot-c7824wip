@@ -6,8 +6,8 @@
 # kernel module as 'module' (i.e -m for module)
 obj-m := mymotogpio.o
 
-# kernel module as bultin (i.e -y for yes)
-#mymotogpio-y += mymotogpio.o 
+# list all objects our module depends on
+myobjects-y += mymotogpio.o 
 
 ccflags-y := -I$(PWD)/ -DDEBUG -g -std=gnu99 -Wno-declaration-after-statement
 
