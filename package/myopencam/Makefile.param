@@ -26,6 +26,17 @@ export AR:=$(CROSS)ar
 export MYOPENCAM_CFLAGS:= -Wall
 MYOPENCAM_CFLAGS += -g
 
+
+# Hisilicon debug
+MYOPENCAM_CFLAGS += -DHIDEBUG
+
+# Image Signal Processor (ISP) v2
+MYOPENCAM_CFLAGS += -DISP_V2
+
+# Tests TRACES
+MYOPENCAM_CFLAGS += -DTRACE_IT
+
+
 # staging include dirs
 ifneq ($(INC_STAGING_DIR), )
 MYOPENCAM_CFLAGS += -I$(INC_STAGING_DIR)
