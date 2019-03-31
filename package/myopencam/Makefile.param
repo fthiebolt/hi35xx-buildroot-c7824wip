@@ -31,6 +31,8 @@ MYOPENCAM_CFLAGS += -g
 MYOPENCAM_CFLAGS += -DHIDEBUG
 
 # Image Signal Processor (ISP) v2
+# Note: disable config_isp for compatibility with previously existing toolchain
+export CONFIG_ISP=n
 MYOPENCAM_CFLAGS += -DISP_V2
 
 # Tests TRACES
@@ -48,3 +50,4 @@ MYOPENCAM_CFLAGS += -L$(LIB_STAGING_DIR)
 endif
 
 # End!!
+

@@ -51,6 +51,7 @@ ifeq ($$(BR2_PACKAGE_HIMPP_SNSDRV_$(call qstrip,$(1))),y)
 	HIMPP_HI3518V100_BUILD_CMDS += \
 		$$(call himpp_build,component/isp2/sensor/$$(call qstrip,$(2)))
 	SNSDRV_TO_INSTALL += component/isp2/lib/$$(patsubst %,libsns_%.so,$(3))
+	SNSDRV_TO_INSTALL += component/isp2/lib/$$(patsubst %,libsns_%.a,$(3))
 endif
 endef
 
@@ -153,9 +154,9 @@ define HIMPP_HI3518V100_INSTALL_STAGING_CMDS
 	cp -a $(@D)/lib $(STAGING_DIR)$(HIMPP_PREFIX)
 	# override the sensor driver libraries
 	for f in $(SNSDRV_TO_INSTALL); do \
-	  $(INSTALL) -D $(@D)/$$f \
-	             $(STAGING_DIR)$(HIMPP_PREFIX)/lib/$$f \
-	  || exit 1; \
+	  t=`basename $$f`; \
+	  $(INSTALL) -v -D -m 0664 $(@D)/$$f \
+	             $(STAGING_DIR)$(HIMPP_PREFIX)/lib/$$t; \
 	done;
 endef
 

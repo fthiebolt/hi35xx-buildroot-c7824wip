@@ -37,7 +37,7 @@ SNS:=$(MAKECMDGOALS)
                     
 
 ifeq ($(SNS),)
-SNS:=ov9712
+SNS:=gc1004
 endif
 
 ifeq ($(SNS), ar130)
@@ -98,6 +98,11 @@ endif
 ifeq ($(SNS), imx236)
 LIBS += $(LIB_STAGING_DIR)/libsns_imx236.a
 CFLAGS += -DSNS_IMX236
+endif
+
+ifeq ($(SNS), gc1004)
+LIBS += $(LIB_STAGING_DIR)/libsns_gc1004.a
+CFLAGS += -DSNS_GC1004
 endif
 
 ifeq ($(CONFIG_ISP), y)

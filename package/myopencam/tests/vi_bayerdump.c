@@ -261,9 +261,6 @@ VI_DEV_ATTR_S stBayerPO3100KAttr =
     VI_DATA_TYPE_RGB
 };
 
-
-
-
 VI_DEV_ATTR_S DEV_ATTR_IMX122_DC_1080P_BASE =
 {
     /*接口模式*/
@@ -740,6 +737,14 @@ VI_CHN_ATTR_S stBayerChn5MAttr =
 #define DEV_BAYER_ATTR     stBayerIMX236Attr
 #define CHN_BAYER_ATTR     stBayerChn1080PIMX236Attr
 #endif
+
+/* [mar.19] Francois add GC1004 support */
+#ifdef SNS_GC1004
+#define DEV_ATTR           DEV_ATTR_OV9712_DC_720P_BASE // 10 bits ADC
+#define DEV_BAYER_ATTR     stBayerOv9712Attr
+#define CHN_BAYER_ATTR     stBayerChn720PAttr
+#endif
+
 /* default */
 #ifndef DEV_BAYER_ATTR
 #define DEV_ATTR           DEV_ATTR_AR0130_DC_720P_BASE
