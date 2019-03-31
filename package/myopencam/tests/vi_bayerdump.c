@@ -1077,8 +1077,14 @@ int VI_InitMpp()
 
     HI_MPI_SYS_Exit();
     HI_MPI_VB_Exit();
+
     stVbConf.astCommPool[0].u32BlkSize = 1280*720*2;
     stVbConf.astCommPool[0].u32BlkCnt =20;
+#if defined SNS_GC1004 || defined SNS_GC1014 || defined SNS_GC1024
+    // need to set this based on availble memory otherwise HI_MPI_VB_Init failed
+    // try cat /proc/media-mem
+    stVbConf.astCommPool[0].u32BlkCnt = 5;
+#endif
 #ifdef SNS_9P031_5M
     stVbConf.astCommPool[0].u32BlkSize = 2624*1944*2;
     stVbConf.astCommPool[0].u32BlkCnt = 10;
