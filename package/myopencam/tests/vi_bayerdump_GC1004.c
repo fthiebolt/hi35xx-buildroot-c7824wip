@@ -908,7 +908,9 @@ HI_S32 VI_IspInit(void)
 #ifdef SNS_PO3100K
     stImageAttr.enBayer         = BAYER_BGGR;
 #endif
-
+#if defined SNS_GC1004 || defined SNS_GC1014 || defined SNS_GC1024
+    stImageAttr.enBayer         = BAYER_RGGB;
+#endif
 
 #ifdef SNS_IMX122
     stImageAttr.enBayer         = BAYER_RGGB;
@@ -986,6 +988,12 @@ HI_S32 VI_IspInit(void)
     stInputTiming.u16HorWndStart = 96;
     stInputTiming.u16VerWndStart = 12;
 #endif
+#if defined SNS_GC1004 || defined SNS_GC1014 || defined SNS_GC1024
+    stInputTiming.enWndMode = ISP_WIND_ALL;
+    stInputTiming.u16HorWndLength = 1280;   // TODO: check!!
+    stInputTiming.u16VerWndLength = 720;    // TODO: check!!
+#endif
+
 
     s32Ret = HI_MPI_ISP_SetInputTiming(&stInputTiming);
     if (s32Ret != HI_SUCCESS)
@@ -1347,7 +1355,7 @@ HI_S32 VI_StartBayerData(VI_DEV_ATTR_S *pstDevAttr, VI_DEV_ATTR_S *pstBayerDevAt
     VI_CHN ViChn = 0;
 
     VI_IspInit();
-
+/*
     s32Ret = HI_MPI_VI_SetDevAttr(ViDev, pstDevAttr);
     if (HI_SUCCESS != s32Ret)
     {
@@ -1398,7 +1406,7 @@ HI_S32 VI_StartBayerData(VI_DEV_ATTR_S *pstDevAttr, VI_DEV_ATTR_S *pstBayerDevAt
         printf("HI_MPI_VI_EnableDev failed!\n");
         return s32Ret;
     }
-
+*/
     s32Ret = HI_MPI_VI_SetDevAttr(ViDev, pstBayerDevAttr);
     if (HI_SUCCESS != s32Ret)
     {
