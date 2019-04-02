@@ -125,7 +125,7 @@ AUDIO_LIBS += $(LIB_STAGING_DIR)/libVoiceEngine.a \
 
 #
 # TODO: usefull ??
-JPEGD_LIBA:=$(LIB_STAGING_DIR)/libjpeg.a
+#LIBS += $(LIB_STAGING_DIR)/libjpeg.a
 
 
 TARGET := $(OBJ:%.o=%)

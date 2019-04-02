@@ -28,515 +28,84 @@
 #include "mpi_isp.h"
 #include "hi_sns_ctrl.h"
 
-#ifdef ISP_V2
-#include "mpi_ae.h"
-#include "mpi_awb.h"
-#include "mpi_af.h"
-#endif
-
 #define MAX_FRM_CNT     256
-#define MAX_FRM_WIDTH   4096        //Èç¹ûÕâ¸öÖµÌ«Ð¡£¬Í¼ÏñºÜ´óµÄ»°´æ²»ÁË
-
+#define MAX_FRM_WIDTH   4096        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÖµÌ«Ð¡ï¿½ï¿½Í¼ï¿½ï¿½Ü´ï¿½Ä»ï¿½ï¿½æ²»ï¿½ï¿½
 
 pthread_t isp_pid;
 static VO_DEV s_VoDev = 0;
 static VO_CHN s_VoChn = 0;
 
-#define ALIGN_BACK(x, a)              ((a) * (((x) / (a))))
-
-#define VI_TEST_PAL 1
-#define VODEV_SD0 1
-
-//#define SNS_AR0130
-
-/* The enCompMode of VI_DEV_ATTR_S should be VI_COMP_MODE_DOUBLE,
-and the au32CompMask array which is relative to the enCompMode should be configd,
-and the isp should be disabled when we want to get the bayer RGB data. */
-
-
-/*AR0130 DC 12bitÊäÈë*/
-VI_DEV_ATTR_S DEV_ATTR_AR0130_DC_720P_BASE =
-/* µäÐÍÊ±Ðò3:7441 BT1120 720P@60fpsµäÐÍÊ±Ðò (¶Ô½ÓÊ±Ðò: Ê±Ðò)*/
+/* GC1004 DC 10bits */
+VI_DEV_ATTR_S DEV_ATTR_GC1004_DC_720P_BASE =
 {
-    /*½Ó¿ÚÄ£Ê½*/
+    /*ï¿½Ó¿ï¿½Ä£Ê½*/
     VI_MODE_DIGITAL_CAMERA,
-    /*1¡¢2¡¢4Â·¹¤×÷Ä£Ê½*/
-    VI_WORK_MODE_1Multiplex,
-    /* r_mask    g_mask    b_mask*/
-    {0xFFF00000,    0x0},
-    /*ÖðÐÐor¸ôÐÐÊäÈë*/
-    VI_SCAN_PROGRESSIVE,
-    /*AdChnId*/
-    {-1, -1, -1, -1},
-    /*enDataSeq, ½öÖ§³ÖYUV¸ñÊ½*/
-    VI_INPUT_DATA_YUYV,
-
-    /*Í¬²½ÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ, --bt1120Ê±ÐòÎÞÐ§*/
-    {
-    /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
-    VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_VALID_SINGAL,VI_VSYNC_VALID_NEG_HIGH,
-
-    /*timingÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ*/
-    /*hsync_hfb    hsync_act    hsync_hhb*/
-    {0,            1280,        0,
-    /*vsync0_vhb vsync0_act vsync0_hhb*/
-     0,            720,        0,
-    /*vsync1_vhb vsync1_act vsync1_hhb*/
-     0,            0,            0}
-    },
-    /*Ê¹ÓÃÄÚ²¿ISP*/
-    VI_PATH_ISP,
-    /*ÊäÈëÊý¾ÝÀàÐÍ*/
-    VI_DATA_TYPE_RGB
-};
-
-VI_DEV_ATTR_S stBayerAr0130Attr =
-{
-    /*½Ó¿ÚÄ£Ê½*/
-    VI_MODE_DIGITAL_CAMERA,
-    /*1¡¢2¡¢4Â·¹¤×÷Ä£Ê½*/
-    VI_WORK_MODE_1Multiplex,
-    /* r_mask    g_mask    b_mask*/
-    {0xFFF00000,    0x0},
-    /*ÖðÐÐor¸ôÐÐÊäÈë*/
-    VI_SCAN_PROGRESSIVE,
-    /*AdChnId*/
-    {-1, -1, -1, -1},
-    /*enDataSeq, ½öÖ§³ÖYUV¸ñÊ½*/
-    VI_INPUT_DATA_YUYV,
-
-    /*Í¬²½ÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ, --bt1120Ê±ÐòÎÞÐ§*/
-    {
-    /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
-    VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_VALID_SINGAL,VI_VSYNC_VALID_NEG_HIGH,
-
-    /*timingÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ*/
-    /*hsync_hfb    hsync_act    hsync_hhb*/
-    {0,            1280,        0,
-    /*vsync0_vhb vsync0_act vsync0_hhb*/
-     0,            720,        0,
-    /*vsync1_vhb vsync1_act vsync1_hhb*/
-     0,            0,            0}
-    },
-    /*Ê¹ÓÃÄÚ²¿ISP*/
-    VI_PATH_RAW,
-    /*ÊäÈëÊý¾ÝÀàÐÍ*/
-    VI_DATA_TYPE_RGB
-};
-
-/*OV9712 DC 10bitÊäÈë*/
-VI_DEV_ATTR_S DEV_ATTR_OV9712_DC_720P_BASE =
-/* µäÐÍÊ±Ðò3:7441 BT1120 720P@60fpsµäÐÍÊ±Ðò (¶Ô½ÓÊ±Ðò: Ê±Ðò)*/
-{
-    /*½Ó¿ÚÄ£Ê½*/
-    VI_MODE_DIGITAL_CAMERA,
-    /*1¡¢2¡¢4Â·¹¤×÷Ä£Ê½*/
+    /*1ï¿½ï¿½2ï¿½ï¿½4Â·ï¿½ï¿½ï¿½ï¿½Ä£Ê½*/
     VI_WORK_MODE_1Multiplex,
     /* r_mask    g_mask    b_mask*/
     {0xFFC00000,    0x0},
-    /*ÖðÐÐor¸ôÐÐÊäÈë*/
+    /*ï¿½ï¿½ï¿½ï¿½orï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
     VI_SCAN_PROGRESSIVE,
     /*AdChnId*/
     {-1, -1, -1, -1},
-    /*enDataSeq, ½öÖ§³ÖYUV¸ñÊ½*/
+    /*enDataSeq, ï¿½ï¿½Ö§ï¿½ï¿½YUVï¿½ï¿½Ê½*/
     VI_INPUT_DATA_YUYV,
 
-    /*Í¬²½ÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ, --bt1120Ê±ÐòÎÞÐ§*/
+    /*Í¬ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½Ó¦regï¿½Ö²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, --bt1120Ê±ï¿½ï¿½ï¿½ï¿½Ð§*/
     {
     /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
+    /*VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_VALID_SINGAL,VI_VSYNC_VALID_NEG_HIGH,*/
     VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_NORM_PULSE,VI_VSYNC_VALID_NEG_HIGH,
-    
-    /*timingÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ*/
-    /*hsync_hfb    hsync_act    hsync_hhb*/
-    {408,            1280,        0,
-    /*vsync0_vhb vsync0_act vsync0_hhb*/
-     6,            720,        6,
-    /*vsync1_vhb vsync1_act vsync1_hhb*/ 
-     0,            0,            0}
-    },
-    /*Ê¹ÓÃÄÚ²¿ISP*/
-    VI_PATH_ISP,
-    /*ÊäÈëÊý¾ÝÀàÐÍ*/
-    VI_DATA_TYPE_RGB
-};
 
-VI_DEV_ATTR_S stBayerOv9712Attr =
-{
-    /*½Ó¿ÚÄ£Ê½*/
-    VI_MODE_DIGITAL_CAMERA,
-    /*1¡¢2¡¢4Â·¹¤×÷Ä£Ê½*/
-    VI_WORK_MODE_1Multiplex,
-    /* r_mask    g_mask    b_mask*/
-    {0xFFC00000,    0x0},
-    /*ÖðÐÐor¸ôÐÐÊäÈë*/
-    VI_SCAN_PROGRESSIVE,
-    /*AdChnId*/
-    {-1, -1, -1, -1},
-    /*enDataSeq, ½öÖ§³ÖYUV¸ñÊ½*/
-    VI_INPUT_DATA_YUYV,
-
-    /*Í¬²½ÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ, --bt1120Ê±ÐòÎÞÐ§*/
-    {
-    /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
-    VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_NORM_PULSE,VI_VSYNC_VALID_NEG_HIGH,
-    
-    /*timingÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ*/
-    /*hsync_hfb    hsync_act    hsync_hhb*/
-    {408,            1280,        0,
-    /*vsync0_vhb vsync0_act vsync0_hhb*/
-     6,            720,        6,
-    /*vsync1_vhb vsync1_act vsync1_hhb*/ 
-     0,            0,            0}
-    },
-    /*Ê¹ÓÃÄÚ²¿ISP*/
-    VI_PATH_RAW,
-    /*ÊäÈëÊý¾ÝÀàÐÍ*/
-    VI_DATA_TYPE_RGB
-};
-
-/*PO3100K DC 12bitÊäÈë*/
-VI_DEV_ATTR_S DEV_ATTR_PO3100K_DC_720P_BASE =
-/* µäÐÍÊ±Ðò3:7441 BT1120 720P@60fpsµäÐÍÊ±Ðò (¶Ô½ÓÊ±Ðò: Ê±Ðò)*/
-{
-    /*½Ó¿ÚÄ£Ê½*/
-    VI_MODE_DIGITAL_CAMERA,
-    /*1¡¢2¡¢4Â·¹¤×÷Ä£Ê½*/
-    VI_WORK_MODE_1Multiplex,
-    /* r_mask    g_mask    b_mask*/
-    {0xFFC00000,    0x0},
-    /*ÖðÐÐor¸ôÐÐÊäÈë*/
-    VI_SCAN_PROGRESSIVE,
-    /*AdChnId*/
-    {-1, -1, -1, -1},
-    /*enDataSeq, ½öÖ§³ÖYUV¸ñÊ½*/
-    VI_INPUT_DATA_YUYV,
-
-    /*Í¬²½ÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ, --bt1120Ê±ÐòÎÞÐ§*/
-    {
-    /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
-    VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_VALID_SINGAL,VI_VSYNC_VALID_NEG_HIGH,
-
-    /*timingÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ*/
+    /*timingï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½Ó¦regï¿½Ö²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
     /*hsync_hfb    hsync_act    hsync_hhb*/
     {0,            1280,        0,
     /*vsync0_vhb vsync0_act vsync0_hhb*/
-     0,            720,        0,
+     0,            720,         0,
     /*vsync1_vhb vsync1_act vsync1_hhb*/
      0,            0,            0}
     },
-    /*Ê¹ÓÃÄÚ²¿ISP*/
+    /* ISP */
     VI_PATH_ISP,
-    /*ÊäÈëÊý¾ÝÀàÐÍ*/
+    /*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
     VI_DATA_TYPE_RGB
 };
 
-VI_DEV_ATTR_S stBayerPO3100KAttr =
+/* GC1004 DC 10bits */
+VI_DEV_ATTR_S stBayerGC1004Attr =
 {
-    /*½Ó¿ÚÄ£Ê½*/
+    /*ï¿½Ó¿ï¿½Ä£Ê½*/
     VI_MODE_DIGITAL_CAMERA,
-    /*1¡¢2¡¢4Â·¹¤×÷Ä£Ê½*/
+    /*1ï¿½ï¿½2ï¿½ï¿½4Â·ï¿½ï¿½ï¿½ï¿½Ä£Ê½*/
     VI_WORK_MODE_1Multiplex,
     /* r_mask    g_mask    b_mask*/
     {0xFFC00000,    0x0},
-    /*ÖðÐÐor¸ôÐÐÊäÈë*/
+    /*ï¿½ï¿½ï¿½ï¿½orï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
     VI_SCAN_PROGRESSIVE,
     /*AdChnId*/
     {-1, -1, -1, -1},
-    /*enDataSeq, ½öÖ§³ÖYUV¸ñÊ½*/
+    /*enDataSeq, ï¿½ï¿½Ö§ï¿½ï¿½YUVï¿½ï¿½Ê½*/
     VI_INPUT_DATA_YUYV,
 
-    /*Í¬²½ÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ, --bt1120Ê±ÐòÎÞÐ§*/
+    /*Í¬ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½Ó¦regï¿½Ö²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, --bt1120Ê±ï¿½ï¿½ï¿½ï¿½Ð§*/
     {
     /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
-    VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_VALID_SINGAL,VI_VSYNC_VALID_NEG_HIGH,
+    /*VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_VALID_SINGAL,VI_VSYNC_VALID_NEG_HIGH,*/
+    VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_NORM_PULSE,VI_VSYNC_VALID_NEG_HIGH,
 
-    /*timingÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ*/
+    /*timingï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½Ó¦regï¿½Ö²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
     /*hsync_hfb    hsync_act    hsync_hhb*/
     {0,            1280,        0,
     /*vsync0_vhb vsync0_act vsync0_hhb*/
-     0,            720,        0,
+     0,            720,         0,
     /*vsync1_vhb vsync1_act vsync1_hhb*/
      0,            0,            0}
     },
-    /*Ê¹ÓÃÄÚ²¿ISP*/
+    /* ISP */
     VI_PATH_RAW,
-    /*ÊäÈëÊý¾ÝÀàÐÍ*/
+    /*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
     VI_DATA_TYPE_RGB
 };
-
-VI_DEV_ATTR_S DEV_ATTR_IMX122_DC_1080P_BASE =
-{
-    /*½Ó¿ÚÄ£Ê½*/
-    VI_MODE_DIGITAL_CAMERA,
-    /*1¡¢2¡¢4Â·¹¤×÷Ä£Ê½*/
-    VI_WORK_MODE_1Multiplex,
-    /* r_mask    g_mask    b_mask*/
-    {0xFFF00000,    0x0},
-    /*ÖðÐÐor¸ôÐÐÊäÈë*/
-    VI_SCAN_PROGRESSIVE,
-    /*AdChnId*/
-    {-1, -1, -1, -1},
-    /*enDataSeq, ½öÖ§³ÖYUV¸ñÊ½*/
-    VI_INPUT_DATA_YUYV,
-
-    /*Í¬²½ÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ, --bt1120Ê±ÐòÎÞÐ§*/
-    {
-    /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
-    VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_NORM_PULSE,VI_VSYNC_VALID_NEG_HIGH,
-    
-    /*timingÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ*/
-    /*hsync_hfb    hsync_act    hsync_hhb*/
-    {0,            1920,        0,
-    /*vsync0_vhb vsync0_act vsync0_hhb*/
-     0,            1080,        0,
-    /*vsync1_vhb vsync1_act vsync1_hhb*/ 
-     0,            0,            0}
-    },
-    /*Ê¹ÓÃÄÚ²¿ISP*/
-    VI_PATH_ISP,
-    /*ÊäÈëÊý¾ÝÀàÐÍ*/
-    VI_DATA_TYPE_RGB
-};
-
-VI_DEV_ATTR_S stBayerImx122Attr =
-{
-    /*½Ó¿ÚÄ£Ê½*/
-    VI_MODE_DIGITAL_CAMERA,
-    /*1¡¢2¡¢4Â·¹¤×÷Ä£Ê½*/
-    VI_WORK_MODE_1Multiplex,
-    /* r_mask    g_mask    b_mask*/
-    {0xFFF00000,    0x0},
-    /*ÖðÐÐor¸ôÐÐÊäÈë*/
-    VI_SCAN_PROGRESSIVE,
-    /*AdChnId*/
-    {-1, -1, -1, -1},
-    /*enDataSeq, ½öÖ§³ÖYUV¸ñÊ½*/
-    VI_INPUT_DATA_YUYV,
-
-    /*Í¬²½ÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ, --bt1120Ê±ÐòÎÞÐ§*/
-    {
-    /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
-    VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_VALID_SINGAL,VI_VSYNC_VALID_NEG_HIGH,
-
-    /*timingÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ*/
-    /*hsync_hfb    hsync_act    hsync_hhb*/
-    {0,            1920,        0,
-    /*vsync0_vhb vsync0_act vsync0_hhb*/
-     0,            1080,        0,
-    /*vsync1_vhb vsync1_act vsync1_hhb*/
-     0,            0,            0}
-    },
-    /*Ê¹ÓÃÄÚ²¿ISP*/
-    VI_PATH_RAW,
-    /*ÊäÈëÊý¾ÝÀàÐÍ*/
-    VI_DATA_TYPE_RGB
-};
-
-VI_DEV_ATTR_S DEV_ATTR_MT9P006_DC_1080P_BASE =
-{
-    /*½Ó¿ÚÄ£Ê½*/
-    VI_MODE_DIGITAL_CAMERA,
-    /*1¡¢2¡¢4Â·¹¤×÷Ä£Ê½*/
-    VI_WORK_MODE_1Multiplex,
-    /* r_mask    g_mask    b_mask*/
-    {0xFFF00000,    0x0},
-    /*ÖðÐÐor¸ôÐÐÊäÈë*/
-    VI_SCAN_PROGRESSIVE,
-    /*AdChnId*/
-    {-1, -1, -1, -1},
-    /*enDataSeq, ½öÖ§³ÖYUV¸ñÊ½*/
-    VI_INPUT_DATA_YUYV,
-
-    /*Í¬²½ÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ, --bt1120Ê±ÐòÎÞÐ§*/
-    {
-    /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
-    VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_VALID_SINGAL,VI_VSYNC_VALID_NEG_HIGH,
-    
-    /*timingÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ*/
-    /*hsync_hfb    hsync_act    hsync_hhb*/
-    {0,            1920,        0,
-    /*vsync0_vhb vsync0_act vsync0_hhb*/
-     0,            1080,        0,
-    /*vsync1_vhb vsync1_act vsync1_hhb*/ 
-     0,            0,            0}
-    },
-    /*Ê¹ÓÃÄÚ²¿ISP*/
-    VI_PATH_ISP,
-    /*ÊäÈëÊý¾ÝÀàÐÍ*/
-    VI_DATA_TYPE_RGB    
-};
-
-VI_DEV_ATTR_S stBayer9p006Attr =
-{
-    /*½Ó¿ÚÄ£Ê½*/
-    VI_MODE_DIGITAL_CAMERA,
-    /*1¡¢2¡¢4Â·¹¤×÷Ä£Ê½*/
-    VI_WORK_MODE_1Multiplex,
-    /* r_mask    g_mask    b_mask*/
-    {0xFFF00000,    0x0},
-    /*ÖðÐÐor¸ôÐÐÊäÈë*/
-    VI_SCAN_PROGRESSIVE,
-    /*AdChnId*/
-    {-1, -1, -1, -1},
-    /*enDataSeq, ½öÖ§³ÖYUV¸ñÊ½*/
-    VI_INPUT_DATA_YUYV,
-
-    /*Í¬²½ÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ, --bt1120Ê±ÐòÎÞÐ§*/
-    {
-    /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
-    VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_VALID_SINGAL,VI_VSYNC_VALID_NEG_HIGH,
-    
-    /*timingÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ*/
-    /*hsync_hfb    hsync_act    hsync_hhb*/
-    {0,            1920,        0,
-    /*vsync0_vhb vsync0_act vsync0_hhb*/
-     0,            1080,        0,
-    /*vsync1_vhb vsync1_act vsync1_hhb*/ 
-     0,            0,            0}
-    },
-    /*Ê¹ÓÃÄÚ²¿ISP*/
-    VI_PATH_RAW,
-    /*ÊäÈëÊý¾ÝÀàÐÍ*/
-    VI_DATA_TYPE_RGB    
-};
-
-VI_DEV_ATTR_S DEV_ATTR_AR0330_DC_1080P_BASE =
-{
-    /*½Ó¿ÚÄ£Ê½*/
-    VI_MODE_DIGITAL_CAMERA,
-    /*1¡¢2¡¢4Â·¹¤×÷Ä£Ê½*/
-    VI_WORK_MODE_1Multiplex,
-    /* r_mask    g_mask    b_mask*/
-    {0xFFF00000,    0x0},
-    /*ÖðÐÐor¸ôÐÐÊäÈë*/
-    VI_SCAN_PROGRESSIVE,
-    /*AdChnId*/
-    {-1, -1, -1, -1},
-    /*enDataSeq, ½öÖ§³ÖYUV¸ñÊ½*/
-    VI_INPUT_DATA_YUYV,
-
-    /*Í¬²½ÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ, --bt1120Ê±ÐòÎÞÐ§*/
-    {
-    /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
-    VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_VALID_SINGAL,VI_VSYNC_VALID_NEG_HIGH,
-    
-    /*timingÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ*/
-    /*hsync_hfb    hsync_act    hsync_hhb*/
-    {0,            1920,        0,
-    /*vsync0_vhb vsync0_act vsync0_hhb*/
-     0,            1080,        0,
-    /*vsync1_vhb vsync1_act vsync1_hhb*/ 
-     0,            0,            0}
-    },
-    /*Ê¹ÓÃÄÚ²¿ISP*/
-    VI_PATH_ISP,
-    /*ÊäÈëÊý¾ÝÀàÐÍ*/
-    VI_DATA_TYPE_RGB    
-};
-
-VI_DEV_ATTR_S stBayerAR0330Attr =
-{
-    /*½Ó¿ÚÄ£Ê½*/
-    VI_MODE_DIGITAL_CAMERA,
-    /*1¡¢2¡¢4Â·¹¤×÷Ä£Ê½*/
-    VI_WORK_MODE_1Multiplex,
-    /* r_mask    g_mask    b_mask*/
-    {0xFFF00000,    0x0},
-    /*ÖðÐÐor¸ôÐÐÊäÈë*/
-    VI_SCAN_PROGRESSIVE,
-    /*AdChnId*/
-    {-1, -1, -1, -1},
-    /*enDataSeq, ½öÖ§³ÖYUV¸ñÊ½*/
-    VI_INPUT_DATA_YUYV,
-
-    /*Í¬²½ÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ, --bt1120Ê±ÐòÎÞÐ§*/
-    {
-    /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
-    VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_VALID_SINGAL,VI_VSYNC_VALID_NEG_HIGH,
-    
-    /*timingÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ*/
-    /*hsync_hfb    hsync_act    hsync_hhb*/
-    {0,            1920,        0,
-    /*vsync0_vhb vsync0_act vsync0_hhb*/
-     0,            1080,        0,
-    /*vsync1_vhb vsync1_act vsync1_hhb*/ 
-     0,            0,            0}
-    },
-    /*Ê¹ÓÃÄÚ²¿ISP*/
-    VI_PATH_RAW,
-    /*ÊäÈëÊý¾ÝÀàÐÍ*/
-    VI_DATA_TYPE_RGB    
-};
-
-VI_DEV_ATTR_S DEV_ATTR_IMX236_DC_1080P_BASE =
-{
-    /*½Ó¿ÚÄ£Ê½*/
-    VI_MODE_DIGITAL_CAMERA,
-    /*1¡¢2¡¢4Â·¹¤×÷Ä£Ê½*/
-    VI_WORK_MODE_1Multiplex,
-    /* r_mask    g_mask    b_mask*/
-    {0xFFF00000,    0x0},
-    /*ÖðÐÐor¸ôÐÐÊäÈë*/
-    VI_SCAN_PROGRESSIVE,
-    /*AdChnId*/
-    {-1, -1, -1, -1},
-    /*enDataSeq, ½öÖ§³ÖYUV¸ñÊ½*/
-    VI_INPUT_DATA_YUYV,
-
-    /*Í¬²½ÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ, --bt1120Ê±ÐòÎÞÐ§*/
-    {
-    /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
-    VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_VALID_SINGAL,VI_VSYNC_VALID_NEG_HIGH,
-    
-    /*timingÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ*/
-    /*hsync_hfb    hsync_act    hsync_hhb*/
-    {0,            1920,        0,
-    /*vsync0_vhb vsync0_act vsync0_hhb*/
-     0,            1080,        0,
-    /*vsync1_vhb vsync1_act vsync1_hhb*/ 
-     0,            0,            0}
-    },
-    /*Ê¹ÓÃÄÚ²¿ISP*/
-    VI_PATH_ISP,
-    /*ÊäÈëÊý¾ÝÀàÐÍ*/
-    VI_DATA_TYPE_RGB    
-};
-
-VI_DEV_ATTR_S stBayerIMX236Attr =
-{
-    /*½Ó¿ÚÄ£Ê½*/
-    VI_MODE_DIGITAL_CAMERA,
-    /*1¡¢2¡¢4Â·¹¤×÷Ä£Ê½*/
-    VI_WORK_MODE_1Multiplex,
-    /* r_mask    g_mask    b_mask*/
-    {0xFFF00000,    0x0},
-    /*ÖðÐÐor¸ôÐÐÊäÈë*/
-    VI_SCAN_PROGRESSIVE,
-    /*AdChnId*/
-    {-1, -1, -1, -1},
-    /*enDataSeq, ½öÖ§³ÖYUV¸ñÊ½*/
-    VI_INPUT_DATA_YUYV,
-
-    /*Í¬²½ÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ, --bt1120Ê±ÐòÎÞÐ§*/
-    {
-    /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
-    VI_VSYNC_PULSE, VI_VSYNC_NEG_HIGH, VI_HSYNC_VALID_SINGNAL,VI_HSYNC_NEG_HIGH,VI_VSYNC_VALID_SINGAL,VI_VSYNC_VALID_NEG_HIGH,
-    
-    /*timingÐÅÏ¢£¬¶ÔÓ¦regÊÖ²áµÄÈçÏÂÅäÖÃ*/
-    /*hsync_hfb    hsync_act    hsync_hhb*/
-    {0,            1920,        0,
-    /*vsync0_vhb vsync0_act vsync0_hhb*/
-     0,            1080,        0,
-    /*vsync1_vhb vsync1_act vsync1_hhb*/ 
-     0,            0,            0}
-    },
-    /*Ê¹ÓÃÄÚ²¿ISP*/
-    VI_PATH_RAW,
-    /*ÊäÈëÊý¾ÝÀàÐÍ*/
-    VI_DATA_TYPE_RGB    
-};
-
-
 
 VI_CHN_ATTR_S stBayerChn720PAttr =
 {
@@ -546,214 +115,17 @@ VI_CHN_ATTR_S stBayerChn720PAttr =
     {1280,   720 },
     /*enCapSel*/
     VI_CAPSEL_BOTH,
-    /*   Í¨µÀ¸ñÊ½*/
+    /*   Í¨ï¿½ï¿½ï¿½ï¿½Ê½*/
     PIXEL_FORMAT_YUV_SEMIPLANAR_422,
     /*bMirr  bFlip   bChromaResample*/
     0,      0,      0,
     /*s32SrcFrameRate   s32FrameRate*/
-    -1, -1
+    -1, -1 /*25, 25*/
 };
 
-VI_CHN_ATTR_S stBayerChn1080PAttr =
-{
-    /*crop_x crop_y, crop_w  crop_h*/
-    {0,     0, 1920,   1080},
-    /*dest_w  dest_h  */
-    {1920,   1080},
-    /*enCapSel*/
-    VI_CAPSEL_BOTH,
-    /*   Í¨µÀ¸ñÊ½*/
-    PIXEL_FORMAT_YUV_SEMIPLANAR_422,
-    /*bMirr  bFlip   bChromaResample*/
-    0,      0,      0,
-    /*s32SrcFrameRate   s32FrameRate*/
-    -1, -1
-};
-
-VI_CHN_ATTR_S stBayerChn720PIMX104Attr =
-{
-    /*crop_x crop_y, crop_w  crop_h*/
-    {68,     20, 1280,   720},
-    /*dest_w  dest_h  */
-    {1280,   720 },
-    /*enCapSel*/
-    VI_CAPSEL_BOTH,
-    /*   Í¨µÀ¸ñÊ½*/
-    PIXEL_FORMAT_YUV_SEMIPLANAR_422,
-    /*bMirr  bFlip   bChromaResample*/
-    0,      0,      0,
-    /*s32SrcFrameRate   s32FrameRate*/
-    -1, -1
-};
-
-VI_CHN_ATTR_S stBayerChn720PICX692Attr =
-{
-    /*crop_x crop_y, crop_w  crop_h*/
-    {200,     2, 1280,   720},
-    /*dest_w  dest_h  */
-    {1280,   720 },
-    /*enCapSel*/
-    VI_CAPSEL_BOTH,
-    /*   Í¨µÀ¸ñÊ½*/
-    PIXEL_FORMAT_YUV_SEMIPLANAR_422,
-    /*bMirr  bFlip   bChromaResample*/
-    0,      0,      0,
-    /*s32SrcFrameRate   s32FrameRate*/
-    -1, -1
-};
-
-VI_CHN_ATTR_S stBayerChn1080PIMX122Attr =
-{
-    /*crop_x crop_y, crop_w  crop_h*/
-    {200,     12, 1920,   1080},
-    /*dest_w  dest_h  */
-    {1920,   1080},
-    /*enCapSel*/
-    VI_CAPSEL_BOTH,
-    /*   Í¨µÀ¸ñÊ½*/
-    PIXEL_FORMAT_YUV_SEMIPLANAR_422,
-    /*bMirr  bFlip   bChromaResample*/
-    0,      0,      0,
-    /*s32SrcFrameRate   s32FrameRate*/
-    -1, -1
-};
-
-VI_CHN_ATTR_S stBayerChn1080P9P006Attr =
-{
-    /*crop_x crop_y, crop_w  crop_h*/
-    {0,     2, 1920,   1080},
-    /*dest_w  dest_h  */
-    {1920,   1080},
-    /*enCapSel*/
-    VI_CAPSEL_BOTH,
-    /*   Í¨µÀ¸ñÊ½*/
-    PIXEL_FORMAT_YUV_SEMIPLANAR_422,
-    /*bMirr  bFlip   bChromaResample*/
-    0,      0,      0,
-    /*s32SrcFrameRate   s32FrameRate*/
-    -1, -1
-};
-
-VI_CHN_ATTR_S stBayerChn1080PAR0330Attr =
-{
-    /*crop_x crop_y, crop_w  crop_h*/
-    {0,     0, 1920,   1080},
-    /*dest_w  dest_h  */
-    {1920,   1080},
-    /*enCapSel*/
-    VI_CAPSEL_BOTH,
-    /*   Í¨µÀ¸ñÊ½*/
-    PIXEL_FORMAT_YUV_SEMIPLANAR_422,
-    /*bMirr  bFlip   bChromaResample*/
-    0,      0,      0,
-    /*s32SrcFrameRate   s32FrameRate*/
-    -1, -1
-};
-
-VI_CHN_ATTR_S stBayerChn1080PIMX236Attr =
-{
-    /*crop_x crop_y, crop_w  crop_h*/
-    {96,     12, 1920,   1080},
-    /*dest_w  dest_h  */
-    {1920,   1080},
-    /*enCapSel*/
-    VI_CAPSEL_BOTH,
-    /*   Í¨µÀ¸ñÊ½*/
-    PIXEL_FORMAT_YUV_SEMIPLANAR_422,
-    /*bMirr  bFlip   bChromaResample*/
-    0,      0,      0,
-    /*s32SrcFrameRate   s32FrameRate*/
-    -1, -1
-};
-
-VI_CHN_ATTR_S stBayerChn5MAttr =
-{
-    {0,     0,     2592,   1944 },
-    {2592,  1944},
-    /*enCapSel*/
-    VI_CAPSEL_BOTH,
-    /*   Í¨µÀ¸ñÊ½*/
-    PIXEL_FORMAT_YUV_SEMIPLANAR_422,
-    /*bMirr  bFlip   bChromaResample*/
-    0,      0,      0,
-    /*s32SrcFrameRate   s32FrameRate*/
-    -1, -1
-
-};
-
-
-#ifdef SNS_PANSO34041
-#endif
-
-#ifdef SNS_AR0130
-#define DEV_ATTR           DEV_ATTR_AR0130_DC_720P_BASE
-#define DEV_BAYER_ATTR     stBayerAr0130Attr
+#define DEV_ATTR           DEV_ATTR_GC1004_DC_720P_BASE
+#define DEV_BAYER_ATTR     stBayerGC1004Attr
 #define CHN_BAYER_ATTR     stBayerChn720PAttr
-#endif
-#ifdef SNS_IMX104
-#define DEV_ATTR           DEV_ATTR_AR0130_DC_720P_BASE
-#define DEV_BAYER_ATTR     stBayerAr0130Attr
-#define CHN_BAYER_ATTR     stBayerChn720PIMX104Attr
-#endif
-#ifdef SNS_IMX138
-#define DEV_ATTR           DEV_ATTR_AR0130_DC_720P_BASE
-#define DEV_BAYER_ATTR     stBayerAr0130Attr
-#define CHN_BAYER_ATTR     stBayerChn720PIMX104Attr
-#endif
-#ifdef SNS_9M034
-#define DEV_ATTR           DEV_ATTR_AR0130_DC_720P_BASE
-#define DEV_BAYER_ATTR     stBayerAr0130Attr
-#define CHN_BAYER_ATTR     stBayerChn720PAttr
-#endif
-#ifdef SNS_ICX692
-#define DEV_ATTR           DEV_ATTR_AR0130_DC_720P_BASE
-#define DEV_BAYER_ATTR     stBayerAr0130Attr
-#define CHN_BAYER_ATTR     stBayerChn720PICX692Attr
-#endif
-#ifdef SNS_OV9712
-#define DEV_ATTR           DEV_ATTR_OV9712_DC_720P_BASE
-#define DEV_BAYER_ATTR     stBayerOv9712Attr
-#define CHN_BAYER_ATTR     stBayerChn720PAttr
-#endif
-#ifdef SNS_PO3100K
-#define DEV_ATTR           DEV_ATTR_PO3100K_DC_720P_BASE
-#define DEV_BAYER_ATTR     stBayerPO3100KAttr
-#define CHN_BAYER_ATTR     stBayerChn720PAttr
-#endif
-#ifdef SNS_IMX122
-#define DEV_ATTR           DEV_ATTR_IMX122_DC_1080P_BASE
-#define DEV_BAYER_ATTR     stBayerImx122Attr
-#define CHN_BAYER_ATTR     stBayerChn1080PIMX122Attr
-#endif
-#ifdef SNS_9P006
-#define DEV_ATTR           DEV_ATTR_MT9P006_DC_1080P_BASE
-#define DEV_BAYER_ATTR     stBayer9p006Attr
-#define CHN_BAYER_ATTR     stBayerChn1080P9P006Attr
-#endif
-#ifdef SNS_AR0330
-#define DEV_ATTR           DEV_ATTR_AR0330_DC_1080P_BASE
-#define DEV_BAYER_ATTR     stBayerAR0330Attr
-#define CHN_BAYER_ATTR     stBayerChn1080PAR0330Attr
-#endif
-#ifdef SNS_AR0330
-#define DEV_ATTR           DEV_ATTR_IMX236_DC_1080P_BASE
-#define DEV_BAYER_ATTR     stBayerIMX236Attr
-#define CHN_BAYER_ATTR     stBayerChn1080PIMX236Attr
-#endif
-
-/* [mar.19] Francois add GC1004 support */
-#if defined SNS_GC1004 || defined SNS_GC1014 || defined SNS_GC1024
-#define DEV_ATTR           DEV_ATTR_OV9712_DC_720P_BASE // 10 bits ADC
-#define DEV_BAYER_ATTR     stBayerOv9712Attr
-#define CHN_BAYER_ATTR     stBayerChn720PAttr
-#endif
-
-/* default */
-#ifndef DEV_BAYER_ATTR
-#define DEV_ATTR           DEV_ATTR_AR0130_DC_720P_BASE
-#define DEV_BAYER_ATTR     stBayerAr0130Attr
-#define CHN_BAYER_ATTR     stBayerChn720PAttr
-#endif
 
 void sample_bayer_dump(VIDEO_FRAME_S * pVBuf, HI_U32 u32Nbit, FILE *pfd)
 {
@@ -801,7 +173,7 @@ void sample_bayer_dump(VIDEO_FRAME_S * pVBuf, HI_U32 u32Nbit, FILE *pfd)
                 u16Data = (pVBufVirt_Y[h*pVBuf->u32Width + w] >> 6);
                 au16Data[w] = u16Data;
             }
-            else if (12 == u32Nbit)         //12bit ÔÚ¸ßÎ»
+            else if (12 == u32Nbit)         //12bit ï¿½Ú¸ï¿½Î»
             {
                 u16Data = (pVBufVirt_Y[h*pVBuf->u32Width + w] >> 4);
                 au16Data[w] = u16Data;
@@ -831,196 +203,6 @@ void sample_bayer_dump(VIDEO_FRAME_S * pVBuf, HI_U32 u32Nbit, FILE *pfd)
     HI_MPI_SYS_Munmap(pUserPageAddr[0], size);
 }
 
-HI_S32 VI_IspInit(void)
-{
-    HI_S32 s32Ret;
-    ISP_IMAGE_ATTR_S stImageAttr;
-    ISP_INPUT_TIMING_S stInputTiming;
-    
-    printf("sensor_init()\r\n");
-#ifdef ISP_V1
-    /* 1. sensor init */
-    sensor_init();
-#endif
-    /* 2. sensor register callback */
-    printf("sensor_register_callback()\r\n");
-    s32Ret = sensor_register_callback();
-    if (s32Ret != HI_SUCCESS)
-    {
-        printf("%s: sensor_register_callback failed with %#x!\n", \
-        __FUNCTION__, s32Ret);
-        return s32Ret;
-    }
-#ifdef ISP_V2
-    ALG_LIB_S stLib;
-
-    /* 1. register ae lib */
-    stLib.s32Id = 0;
-    strcpy(stLib.acLibName, HI_AE_LIB_NAME);
-    s32Ret = HI_MPI_AE_Register(&stLib);
-    if (s32Ret != HI_SUCCESS)
-    {
-        printf("%s: HI_MPI_AE_Register failed!\n", __FUNCTION__);
-        return s32Ret;
-    }
-
-    /* 2. register awb lib */
-    stLib.s32Id = 0;
-    strcpy(stLib.acLibName, HI_AWB_LIB_NAME);
-    s32Ret = HI_MPI_AWB_Register(&stLib);
-    if (s32Ret != HI_SUCCESS)
-    {
-        printf("%s: HI_MPI_AWB_Register failed!\n", __FUNCTION__);
-        return s32Ret;
-    }
-
-    /* 3. register af lib */
-    stLib.s32Id = 0;
-    strcpy(stLib.acLibName, HI_AF_LIB_NAME);
-    s32Ret = HI_MPI_AF_Register(&stLib);
-    if (s32Ret != HI_SUCCESS)
-    {
-        printf("%s: HI_MPI_AF_Register failed!\n", __FUNCTION__);
-        return s32Ret;
-    }
-#endif
-
-    s32Ret = HI_MPI_ISP_Init();
-    if (s32Ret != HI_SUCCESS)
-    {
-        printf("%s: HI_MPI_ISP_Init failed!\n", __FUNCTION__);
-        return s32Ret;
-    }
-
-    stImageAttr.enBayer         = BAYER_GRBG;
-    stImageAttr.u16FrameRate    = 30;
-    stImageAttr.u16Width        = 1280;
-    stImageAttr.u16Height       = 720;
-#ifdef SNS_IMX104
-    stImageAttr.enBayer         = BAYER_GBRG;
-#endif
-#ifdef SNS_IMX138
-    stImageAttr.enBayer         = BAYER_GBRG;
-#endif
-#ifdef SNS_OV9712
-    stImageAttr.enBayer         = BAYER_BGGR;
-#endif
-#ifdef SNS_PO3100K
-    stImageAttr.enBayer         = BAYER_BGGR;
-#endif
-#if defined SNS_GC1004 || defined SNS_GC1014 || defined SNS_GC1024
-    stImageAttr.enBayer         = BAYER_RGGB;
-#endif
-
-#ifdef SNS_IMX122
-    stImageAttr.enBayer         = BAYER_RGGB;
-    stImageAttr.u16Width        = 1920;
-    stImageAttr.u16Height       = 1080;
-#endif
-#ifdef SNS_9P006
-    stImageAttr.enBayer         = BAYER_GRBG;
-    stImageAttr.u16Width        = 1920;
-    stImageAttr.u16Height       = 1080;
-#endif
-#ifdef SNS_AR0330
-    stImageAttr.enBayer         = BAYER_GRBG;
-    stImageAttr.u16Width        = 1920;
-    stImageAttr.u16Height       = 1080;
-#endif
-#ifdef SNS_IMX236
-    stImageAttr.enBayer         = BAYER_RGGB;
-    stImageAttr.u16Width        = 1920;
-    stImageAttr.u16Height       = 1080;
-#endif
-
-
-    s32Ret = HI_MPI_ISP_SetImageAttr(&stImageAttr);
-    if (s32Ret != HI_SUCCESS)
-    {
-        printf("%s: HI_MPI_ISP_SetImageAttr failed with %#x!\n", __FUNCTION__, s32Ret);
-        return s32Ret;
-    }
-
-    stInputTiming.enWndMode = ISP_WIND_NONE;
-    stInputTiming.u16HorWndStart = 0;
-    stInputTiming.u16HorWndLength = 0;
-    stInputTiming.u16VerWndStart = 0;
-    stInputTiming.u16VerWndLength = 0;
-#ifdef SNS_IMX104
-    stInputTiming.enWndMode = ISP_WIND_ALL;
-    stInputTiming.u16HorWndLength = 1348;
-    stInputTiming.u16VerWndLength = 740;
-#endif
-#ifdef SNS_PO3100K
-    stInputTiming.enWndMode = ISP_WIND_ALL;
-    stInputTiming.u16HorWndLength = 1280;
-    stInputTiming.u16VerWndLength = 720;
-#endif
-#ifdef SNS_IMX138
-    stInputTiming.enWndMode = ISP_WIND_ALL;
-    stInputTiming.u16HorWndLength = 1348;
-    stInputTiming.u16VerWndLength = 740;
-#endif
-#ifdef SNS_ICX692
-    stInputTiming.enWndMode = ISP_WIND_ALL;
-    stInputTiming.u16HorWndLength = 1480;
-    stInputTiming.u16VerWndLength = 722;
-#endif
-#ifdef SNS_IMX122
-    stInputTiming.enWndMode = ISP_WIND_ALL;
-    stInputTiming.u16HorWndLength = 2120;
-    stInputTiming.u16VerWndLength = 1092;
-#endif
-#ifdef SNS_9P006
-    stInputTiming.enWndMode = ISP_WIND_ALL;
-    stInputTiming.u16HorWndLength = 1920;
-    stInputTiming.u16VerWndLength = 1082;
-#endif
-#ifdef SNS_AR0330
-    stInputTiming.enWndMode = ISP_WIND_ALL;
-    stInputTiming.u16HorWndLength = 1920;
-    stInputTiming.u16VerWndLength = 1082;
-#endif
-#ifdef SNS_IMX236
-    stInputTiming.enWndMode = ISP_WIND_ALL;
-    stInputTiming.u16HorWndLength = 1920;
-    stInputTiming.u16VerWndLength = 1082;
-    stInputTiming.u16HorWndStart = 96;
-    stInputTiming.u16VerWndStart = 12;
-#endif
-#if defined SNS_GC1004 || defined SNS_GC1014 || defined SNS_GC1024
-    stInputTiming.enWndMode = ISP_WIND_ALL;
-    stInputTiming.u16HorWndLength = 1280;   // TODO: check!!
-    stInputTiming.u16VerWndLength = 720;    // TODO: check!!
-#endif
-
-
-    s32Ret = HI_MPI_ISP_SetInputTiming(&stInputTiming);
-    if (s32Ret != HI_SUCCESS)
-    {
-        printf("%s: HI_MPI_ISP_SetInputTiming failed with %#x!\n", __FUNCTION__, s32Ret);
-        return s32Ret;
-    }
-
-    if (0 != pthread_create(&isp_pid, 0, (void* (*)(void*))HI_MPI_ISP_Run, NULL))
-    {
-        printf("%s: create isp running thread failed!\n", __FUNCTION__);
-        return HI_FAILURE;
-    }
-
-    return HI_SUCCESS;
-}
-
-HI_S32 VI_StopIsp()
-{
-    /* 11. isp exit and main programme exit                                    */
-    printf("Isp will exit!\n");
-    HI_MPI_ISP_Exit();
-    pthread_join(isp_pid, 0);
-
-    return 0;
-}
-
 HI_S32 VI_DumpBayer(VI_CHN ViChn, HI_U32 u32Nbit, HI_U32 u32Cnt)
 {
     int i, j;
@@ -1028,6 +210,7 @@ HI_S32 VI_DumpBayer(VI_CHN ViChn, HI_U32 u32Nbit, HI_U32 u32Cnt)
     VI_FRAME_INFO_S astFrame[MAX_FRM_CNT];
     HI_CHAR szYuvName[128];
     FILE *pfd;
+    HI_S32 s32Ret = 0;
 
     if (HI_MPI_VI_SetFrameDepth(ViChn, 1))
     {
@@ -1035,11 +218,15 @@ HI_S32 VI_DumpBayer(VI_CHN ViChn, HI_U32 u32Nbit, HI_U32 u32Cnt)
         return -1;
     }
 
-    usleep(5000);
+    //usleep(5000);
 
-    if (HI_MPI_VI_GetFrame(ViChn, &stFrame.stViFrmInfo))
+    // s32Ret = HI_MPI_VI_GetFrameTimeOut(ViChn, &stFrame.stViFrmInfo, -1);
+    s32Ret = HI_MPI_VI_GetFrame(ViChn, &stFrame.stViFrmInfo);
+    
+    if (s32Ret)
     {
-        printf("HI_MPI_VI_GetFrame err, vi chn %d \n", ViChn);
+        printf("HI_MPI_VI_GetFrame err, vi chn %d, ret value %x\n", ViChn, s32Ret);
+        printf("HI_ERR_VI_BUF_EMPTY = %x\n", HI_ERR_VI_BUF_EMPTY);
         return -1;
     }
 
@@ -1056,6 +243,8 @@ HI_S32 VI_DumpBayer(VI_CHN ViChn, HI_U32 u32Nbit, HI_U32 u32Cnt)
         return -1;
     }
 
+    printf("Getting all frames\n");
+    
     /* get VI frame  */
     for (i=0; i<u32Cnt; i++)
     {
@@ -1066,6 +255,8 @@ HI_S32 VI_DumpBayer(VI_CHN ViChn, HI_U32 u32Nbit, HI_U32 u32Cnt)
             break;
         }
     }
+    
+    printf("Saving all frames\n");
 
     for(j=0; j<i; j++)
     {
@@ -1075,8 +266,12 @@ HI_S32 VI_DumpBayer(VI_CHN ViChn, HI_U32 u32Nbit, HI_U32 u32Cnt)
         /* release frame after using */
         HI_MPI_VI_ReleaseFrame(ViChn, &astFrame[j].stViFrmInfo);
     }
+    
+    printf("All frames processed\n");
 
     fclose(pfd);    
+    
+    printf("File closed\n");
 
     return 0;
 }
@@ -1088,34 +283,11 @@ int VI_InitMpp()
 
     HI_MPI_SYS_Exit();
     HI_MPI_VB_Exit();
-
-    stVbConf.astCommPool[0].u32BlkSize = 1280*720*2;
-    stVbConf.astCommPool[0].u32BlkCnt =20;
-#if defined SNS_GC1004 || defined SNS_GC1014 || defined SNS_GC1024
+    
     // need to set this based on availble memory otherwise HI_MPI_VB_Init failed
     // try cat /proc/media-mem
-    stVbConf.astCommPool[0].u32BlkCnt = 5;
-#endif
-#ifdef SNS_9P031_5M
-    stVbConf.astCommPool[0].u32BlkSize = 2624*1944*2;
-    stVbConf.astCommPool[0].u32BlkCnt = 10;
-#endif
-#ifdef SNS_IMX122
-    stVbConf.astCommPool[0].u32BlkSize = 1920*1080*2;
-    stVbConf.astCommPool[0].u32BlkCnt = 10;
-#endif
-#ifdef SNS_9P006
-    stVbConf.astCommPool[0].u32BlkSize = 1920*1080*2;
-    stVbConf.astCommPool[0].u32BlkCnt = 10;
-#endif
-#ifdef SNS_AR0330
-    stVbConf.astCommPool[0].u32BlkSize = 1920*1080*2;
-    stVbConf.astCommPool[0].u32BlkCnt = 10;
-#endif
-#ifdef SNS_IMX236
-    stVbConf.astCommPool[0].u32BlkSize = 1920*1080*2;
-    stVbConf.astCommPool[0].u32BlkCnt = 10;
-#endif
+    stVbConf.astCommPool[0].u32BlkSize = 1280*720*2;
+    stVbConf.astCommPool[0].u32BlkCnt = 5; 
 
     if ( HI_MPI_VB_SetConf(&stVbConf))
     {
@@ -1144,269 +316,15 @@ int VI_InitMpp()
     return HI_SUCCESS;
 }
 
-
-HI_S32 VI_GetDefVoAttr(VO_DEV VoDev, VO_INTF_SYNC_E enIntfSync, VO_PUB_ATTR_S *pstPubAttr,
-    VO_VIDEO_LAYER_ATTR_S *pstLayerAttr, HI_S32 s32SquareSort, VO_CHN_ATTR_S *astChnAttr)
-{
-    VO_INTF_TYPE_E enIntfType;
-    HI_U32 u32Frmt, u32Width, u32Height, j;
-
-    if(VO_OUTPUT_PAL == enIntfSync || VO_OUTPUT_NTSC == enIntfSync )
-    {
-        enIntfType = VO_INTF_CVBS;
-    }
-    else
-    {
-        enIntfType = VO_INTF_BT1120;
-    }
-
-    switch (enIntfSync)
-    {
-        case VO_OUTPUT_PAL      :  u32Width = 720;  u32Height = 576;  u32Frmt = 25; break;
-        case VO_OUTPUT_NTSC     :  u32Width = 720;  u32Height = 480;  u32Frmt = 30; break;
-        case VO_OUTPUT_1080P24  :  u32Width = 1920; u32Height = 1080; u32Frmt = 24; break;
-        case VO_OUTPUT_1080P25  :  u32Width = 1920; u32Height = 1080; u32Frmt = 25; break;
-        case VO_OUTPUT_1080P30  :  u32Width = 1920; u32Height = 1080; u32Frmt = 30; break;
-        case VO_OUTPUT_720P50   :  u32Width = 1280; u32Height = 720;  u32Frmt = 50; break;
-        case VO_OUTPUT_720P60   :  u32Width = 1280; u32Height = 720;  u32Frmt = 60; break;
-        case VO_OUTPUT_1080I50  :  u32Width = 1920; u32Height = 1080; u32Frmt = 50; break;
-        case VO_OUTPUT_1080I60  :  u32Width = 1920; u32Height = 1080; u32Frmt = 60; break;
-        case VO_OUTPUT_1080P50  :  u32Width = 1920; u32Height = 1080; u32Frmt = 50; break;
-        case VO_OUTPUT_1080P60  :  u32Width = 1920; u32Height = 1080; u32Frmt = 60; break;
-        case VO_OUTPUT_576P50   :  u32Width = 720;  u32Height = 576;  u32Frmt = 50; break;
-        case VO_OUTPUT_480P60   :  u32Width = 720;  u32Height = 480;  u32Frmt = 60; break;
-        case VO_OUTPUT_800x600_60: u32Width = 800;  u32Height = 600;  u32Frmt = 60; break;
-        case VO_OUTPUT_1024x768_60:u32Width = 1024; u32Height = 768;  u32Frmt = 60; break;
-        case VO_OUTPUT_1280x1024_60:u32Width =1280; u32Height = 1024; u32Frmt = 60; break;
-        case VO_OUTPUT_1366x768_60:u32Width = 1366; u32Height = 768;  u32Frmt = 60; break;
-        case VO_OUTPUT_1440x900_60:u32Width = 1440; u32Height = 900;  u32Frmt = 60; break;
-        case VO_OUTPUT_1280x800_60:u32Width = 1280; u32Height = 800;  u32Frmt = 60; break;
-
-        default: return HI_FAILURE;
-    }
-
-    if (NULL != pstPubAttr)
-    {
-        pstPubAttr->enIntfSync = enIntfSync;
-        pstPubAttr->u32BgColor = 0xFF; //BLUE
-        pstPubAttr->bDoubleFrame = HI_FALSE;
-        pstPubAttr->enIntfType = enIntfType;
-    }
-
-    if (NULL != pstLayerAttr)
-    {
-        pstLayerAttr->stDispRect.s32X       = 0;
-        pstLayerAttr->stDispRect.s32Y       = 0;
-        pstLayerAttr->stDispRect.u32Width   = u32Width;
-        pstLayerAttr->stDispRect.u32Height  = u32Height;
-        pstLayerAttr->stImageSize.u32Width  = u32Width;
-        pstLayerAttr->stImageSize.u32Height = u32Height;
-        //pstLayerAttr->u32DispFrmRt          = u32Frmt;
-        pstLayerAttr->u32DispFrmRt          = 25;
-        pstLayerAttr->enPixFormat           = PIXEL_FORMAT_YUV_SEMIPLANAR_422;
-    }
-
-    if (NULL != astChnAttr)
-    {
-        for (j=0; j<(s32SquareSort * s32SquareSort); j++)
-        {
-            astChnAttr[j].stRect.s32X       = ALIGN_BACK((u32Width/s32SquareSort) * (j%s32SquareSort), 4);
-            astChnAttr[j].stRect.s32Y       = ALIGN_BACK((u32Height/s32SquareSort) * (j/s32SquareSort), 4);
-            astChnAttr[j].stRect.u32Width   = ALIGN_BACK(u32Width/s32SquareSort, 4);
-            astChnAttr[j].stRect.u32Height  = ALIGN_BACK(u32Height/s32SquareSort, 4);
-            astChnAttr[j].u32Priority       = 0;
-            astChnAttr[j].bDeflicker        = HI_FALSE;
-        }
-    }
-
-    return HI_SUCCESS;
-}
-
-HI_S32 VI_StartVo1Pic(VO_DEV VoDev)
-{
-    HI_S32 i, s32ChnNum = 1;
-    VO_PUB_ATTR_S stPubAttr;
-    VO_VIDEO_LAYER_ATTR_S stLayerAttr;
-    VO_CHN_ATTR_S astChnAttr[VO_MAX_CHN_NUM];
-
-    if (VoDev < VODEV_SD0)
-    {
-        #ifdef VI_TEST_PAL
-        VI_GetDefVoAttr(VoDev, VO_OUTPUT_PAL, &stPubAttr, &stLayerAttr, 1, astChnAttr);
-        #else
-        VI_GetDefVoAttr(VoDev, VO_OUTPUT_NTSC, &stPubAttr, &stLayerAttr, 1, astChnAttr);
-        #endif
-    }
-    else
-    {
-        #ifdef VI_TEST_PAL
-            VI_GetDefVoAttr(VoDev, VO_OUTPUT_PAL, &stPubAttr, &stLayerAttr, 1, astChnAttr);
-        #else
-            VI_GetDefVoAttr(VoDev, VO_OUTPUT_NTSC, &stPubAttr, &stLayerAttr, 1, astChnAttr);
-        #endif
-    }
-
-    HI_MPI_VO_SetPubAttr(VoDev, &stPubAttr);
-
-    HI_MPI_VO_Enable(VoDev);
-
-    HI_MPI_VO_SetVideoLayerAttr(VoDev, &stLayerAttr);
-
-    HI_MPI_VO_EnableVideoLayer(VoDev);
-
-    for (i=0; i<s32ChnNum; i++)
-    {
-        HI_MPI_VO_SetChnAttr(VoDev, i, &astChnAttr[i]);
-
-        HI_MPI_VO_EnableChn(VoDev, i);
-    }
-    return 0;
-}
-
-
-HI_S32 VI_BindViVo(VI_CHN ViChn, VO_DEV VoDev, VO_CHN VoChn)
-{
-    MPP_CHN_S stSrcChn, stDestChn;
-
-    stSrcChn.enModId    = HI_ID_VIU;
-    stSrcChn.s32DevId   = 0;
-    stSrcChn.s32ChnId   = ViChn;
-
-    stDestChn.enModId   = HI_ID_VOU;
-    stDestChn.s32ChnId  = VoChn;
-    stDestChn.s32DevId  = VoDev;
-
-    return HI_MPI_SYS_Bind(&stSrcChn, &stDestChn);
-}
-
-HI_S32 VI_UnBindViVo(VO_DEV VoDev, VO_CHN VoChn)
-{
-    MPP_CHN_S stDestChn;
-
-    stDestChn.enModId   = HI_ID_VOU;
-    stDestChn.s32DevId  = VoDev;
-    stDestChn.s32ChnId  = VoChn;
-
-    return HI_MPI_SYS_UnBind(NULL, &stDestChn);
-}
-
-
-HI_S32 VI_PreviewOnVo(VI_CHN ViChn)
-{
-    VI_CHN_ATTR_S stViChnAttr;
-    VO_VIDEO_LAYER_ATTR_S stVoLayerAttr;
-    VO_CHN_ATTR_S stVoChnAttr = {0, {0,0,1280, 720}, HI_FALSE};
-    SIZE_S *pstDestSize = NULL;
-    PIXEL_FORMAT_E  enPixFormat;
-    VO_DEV VoDev = s_VoDev;
-    VO_CHN VoChn = s_VoChn;
-
-    HI_MPI_VI_GetChnAttr(ViChn, &stViChnAttr);
-    pstDestSize = &stViChnAttr.stDestSize;
-    enPixFormat = stViChnAttr.enPixFormat;
-
-
-    if (pstDestSize->u32Height < 32 || pstDestSize->u32Width < 32)
-    {
-        printf("vo not support Size, the size must larger (32x32)\n");
-        return HI_SUCCESS;
-    }
-    #if 0
-    printf("Chn:%d,W:%d,H:%d,fmt:sp%d\n", ViChn, pstDestSize->u32Width, pstDestSize->u32Height,
-        (enPixFormat == PIXEL_FORMAT_YUV_SEMIPLANAR_422) ? 422:420);
-    #endif
-    HI_MPI_VO_GetVideoLayerAttr(VoDev, &stVoLayerAttr);
-
-    if (stVoLayerAttr.enPixFormat != enPixFormat)
-    {
-        HI_MPI_VO_DisableChn(VoDev, VoChn);
-
-        HI_MPI_VO_DisableVideoLayer(VoDev);
-        stVoLayerAttr.enPixFormat = enPixFormat;
-        HI_MPI_VO_SetVideoLayerAttr(VoDev, &stVoLayerAttr);
-        HI_MPI_VO_EnableVideoLayer(VoDev);
-
-        stVoChnAttr.stRect.u32Width = pstDestSize->u32Width;
-        stVoChnAttr.stRect.u32Height = pstDestSize->u32Height;
-        stVoChnAttr.stRect.u32Height = stVoChnAttr.stRect.u32Height / 4 * 4;//VO¸ß¶ÈÒª4¶ÔÆë
-        HI_MPI_VO_SetChnAttr(VoDev, VoChn, &stVoChnAttr);
-        HI_MPI_VO_EnableChn(VoDev, VoChn);
-    }
-
-    stVoChnAttr.stRect.s32X = 0;
-    stVoChnAttr.stRect.s32Y = 0;
-    stVoChnAttr.stRect.u32Width = pstDestSize->u32Width;
-    stVoChnAttr.stRect.u32Height = pstDestSize->u32Height;
-    stVoChnAttr.stRect.u32Height = stVoChnAttr.stRect.u32Height / 4 * 4;//VO¸ß¶ÈÒª4¶ÔÆë
-    //HI_MPI_VO_ChnHide(VoDev, VoChn), "HI_MPI_VO_ChnHide");
-    HI_MPI_VO_SetChnAttr(VoDev, VoChn, &stVoChnAttr);
-
-    VI_UnBindViVo(VoDev, VoChn);
-    VI_BindViVo(ViChn, VoDev, VoChn);
-
-    return HI_SUCCESS;
-}
-
 HI_S32 VI_StartBayerData(VI_DEV_ATTR_S *pstDevAttr, VI_DEV_ATTR_S *pstBayerDevAttr,
     VI_CHN_ATTR_S *pstChnAttr)
 {
     HI_S32 s32Ret = 0;
     VI_DEV ViDev = 0;
     VI_CHN ViChn = 0;
+    
+    sensor_init();
 
-    VI_IspInit();
-/*
-    s32Ret = HI_MPI_VI_SetDevAttr(ViDev, pstDevAttr);
-    if (HI_SUCCESS != s32Ret)
-    {
-        printf("HI_MPI_VI_SetDevAttr failed!\n");
-        return s32Ret;
-    }
-
-    s32Ret = HI_MPI_VI_EnableDev(ViDev);
-    if (HI_SUCCESS != s32Ret)
-    {
-        printf("HI_MPI_VI_EnableDev failed!\n");
-        return s32Ret;
-    }
-
-    VI_StartVo1Pic(s_VoDev);
-    s32Ret = HI_MPI_VI_SetChnAttr(ViChn, pstChnAttr);
-    if (HI_SUCCESS != s32Ret)
-    {
-        printf("HI_MPI_VI_SetChnAttr failed!\n");
-        return s32Ret;
-    }
-
-    s32Ret = HI_MPI_VI_EnableChn(ViChn);
-    if (HI_SUCCESS != s32Ret)
-    {
-        printf("HI_MPI_VI_EnableChn failed!\n");
-        return s32Ret;
-    }
-
-    VI_PreviewOnVo(s_VoChn);
-
-    printf("Waiting isp auto adjust,press any key to stop adjust!\n");
-    getchar();
-
-    HI_MPI_ISP_Exit();
-    pthread_join(isp_pid, 0);
-
-    s32Ret = HI_MPI_VI_DisableChn(ViChn);
-    if (HI_SUCCESS != s32Ret)
-    {
-        printf("HI_MPI_VI_EnableChn failed!\n");
-        return s32Ret;
-    }
-
-    s32Ret = HI_MPI_VI_DisableDev(ViDev);
-    if (HI_SUCCESS != s32Ret)
-    {
-        printf("HI_MPI_VI_EnableDev failed!\n");
-        return s32Ret;
-    }
-*/
     s32Ret = HI_MPI_VI_SetDevAttr(ViDev, pstBayerDevAttr);
     if (HI_SUCCESS != s32Ret)
     {
@@ -1485,12 +403,12 @@ HI_S32 main(int argc, char *argv[])
     s32Ret = VI_DumpBayer(0, u32Nbit, u32FrmCnt);
     if (HI_SUCCESS != s32Ret)
     {
-        printf("VI_StartBayerData failed!\n");
+        printf("VI_DumpBayer failed!\n");
         return s32Ret;
     }
-
-    printf("\nShutting down");
-
+    
+    printf("Shutting down\n");
+    
     //sleep(2);
     //VI_StopIsp();
     HI_MPI_SYS_Exit();
@@ -1498,6 +416,4 @@ HI_S32 main(int argc, char *argv[])
 
     return HI_SUCCESS;
 }
-
-
 
