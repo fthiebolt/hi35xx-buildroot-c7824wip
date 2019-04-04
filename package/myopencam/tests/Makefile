@@ -105,6 +105,16 @@ LIBS += $(LIB_STAGING_DIR)/libsns_gc1004.a
 CFLAGS += -DSNS_GC1004
 endif
 
+ifeq ($(SNS), gc1014)
+LIBS += $(LIB_STAGING_DIR)/libsns_gc1014.a
+CFLAGS += -DSNS_GC1024
+endif
+
+ifeq ($(SNS), gc1024)
+LIBS += $(LIB_STAGING_DIR)/libsns_gc1024.a
+CFLAGS += -DSNS_GC1024
+endif
+
 ifeq ($(CONFIG_ISP), y)
 CFLAGS += -DISP_V1
 else
