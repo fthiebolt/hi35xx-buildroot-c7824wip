@@ -8,7 +8,7 @@
 # ar0130 mn34031 imx104 icx692 ov9712 9m034 imx122 mt9p006
 # imx138 soih22 ov2710 himax1375 gc1004 gc1014 ar0330 ar0331
 
-SNS_A=gc1014
+SNS_A=gc1004
 
 if [ $# -ge 2 ]; then
     SNS_A=$2
@@ -122,7 +122,9 @@ insert_ko()
     source ./clkcfg_hi3518.sh > /dev/null
 
     # driver load
-    insmod mmz.ko mmz=$(mmz_mem_info) anony=1 || report_error
+    #insmod mmz.ko mmz=anonymous,0,0x82400000,28M anony=1 || report_error   #from original
+    echo -e "... will insmod mmz.ko mmz=$(mmz_mem_info) ..."
+    insmod mmz.ko mmz=$(mmz_mem_info) anony=1 || report_error version from buildroot
     insmod hi3518_base.ko
     insmod hi3518_sys.ko
     insmod hiuser.ko
@@ -130,12 +132,14 @@ insert_ko()
     insmod hi3518_tde.ko
     insmod hi3518_dsu.ko
 
-    insmod hi3518_viu.ko ext_csc_en=0 csc_ct_mode=1 csc_tv_en=1
-    insmod hi3518_isp.ko
+    insmod hi3518_viu.ko                #from original
+    #insmod hi3518_viu.ko ext_csc_en=0 csc_ct_mode=1 csc_tv_en=1
+    insmod hi3518_isp.ko proc_param=0   #from original
+    #insmod hi3518_isp.ko
     insmod hi3518_vpss.ko
-    #insmod hi3518_vou.ko
+    insmod hi3518_vou.ko
     #insmod hi3518_vou.ko detectCycle=0 #close dac detect
-    #insmod hifb.ko video="hifb:vram0_size:1620"
+    insmod hifb.ko video="hifb:vram0_size:1620"
     
     insmod hi3518_venc.ko
     insmod hi3518_group.ko
@@ -147,8 +151,10 @@ insert_ko()
     
     insmod hi3518_vda.ko
     insmod hi3518_ive.ko
+    insmod hi_adc.ko                    #from original
 
     insmod extdrv/hi_i2c.ko
+    insmod extdrv/gpio_aplink.ko
     #insmod extdrv/gpioi2c.ko
     #insmod extdrv/gpioi2c_ex.ko
     insmod extdrv/pwm.ko
@@ -164,6 +170,7 @@ insert_ko()
 
     # system configuration
     source ./sysctl_hi3518.sh > /dev/null
+    insmod extdrv/hi_rtc.ko
 }
 
 remove_ko()

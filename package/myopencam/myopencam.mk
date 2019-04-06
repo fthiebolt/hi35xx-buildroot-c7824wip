@@ -157,6 +157,8 @@ define MYOPENCAM_INSTALL_TARGET_CMDS
     $(MYOPENCAM_TARGET_INSTALL_TESTS)
     $(INSTALL) -m 0755 -D package/myopencam/myopencam.sh \
         $(TARGET_DIR)/$(MYOPENCAM_PREFIX)/myopencam.sh
+    $(INSTALL) -m 0755 -D package/myopencam/low_power.sh \
+        $(TARGET_DIR)/$(MYOPENCAM_PREFIX)/low_power.sh
 endef
 
 define MYOPENCAM_INSTALL_INIT_SYSV

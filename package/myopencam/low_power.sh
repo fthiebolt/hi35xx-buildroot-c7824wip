@@ -1,0 +1,69 @@
+#!/bin/sh
+
+echo -e "\t... custom low_power script ..."
+
+#关闭USB PHY的总电源：0x20050080 [12]bit配置为0
+#devmem  0x20050080 32 0x000121a8   # was a comment in original
+
+#关闭USB PHY的模拟电源：0x20050084 [22]bit配置为1
+#devmem  0x20050084 32 0x005d2188   # was a comment in original
+
+#关闭NANDC：0x200300D0 [1:0]配置为2'b01
+devmem  0x200300D0 32 0x5
+
+#NANDC管脚复用成gpio
+devmem  0x200f00c8 32  0x1
+devmem  0x200f00cc 32  0x1
+devmem  0x200f00d0 32  0x1
+devmem  0x200f00d4 32  0x1
+devmem  0x200f00d8 32  0x1
+devmem  0x200f00dc 32  0x1
+devmem  0x200f00e0 32  0x1
+devmem  0x200f00e4 32  0x1
+devmem  0x200f00e8 32  0x1
+devmem  0x200f00ec 32  0x1
+devmem  0x200f00f4 32  0x1
+devmem  0x200f00f8 32  0x1
+
+#关闭SAR ADC 时钟
+devmem  0x20030080 32 0x1
+
+#关闭SAR ADC
+devmem  0x200b0008 32 0x1
+
+#打开PWM
+devmem  0x20030038 32 0x2
+
+# IR
+# [apr.18] we don't want IR ot get disabled
+#devmem  0x20070000 32 0x0
+devmem  0x20070000 32 0x1
+
+#IR 管脚复用成gpio
+devmem  0x200f00c4 32 0x1
+
+#UART2不使能：0x200A0000 [9][8][0]bit都配置为0
+devmem  0x200A0030 32 0x0
+
+#UART2管脚复用成gpio
+devmem  0x200f0108 32 0x0
+devmem  0x200f010c 32 0x0
+
+#关闭SPI0和SPI1
+devmem  0x200C0004 32 0x7F00
+devmem  0x200E0004 32 0x7F00
+
+#spi0 管脚复用成gpio
+devmem  0x200f000c 32 0x0
+devmem  0x200f0010 32 0x0
+devmem  0x200f0014 32 0x0
+
+#spi1 管脚复用成gpio
+devmem  0x200f0110 32 0x0
+devmem  0x200f0114 32 0x0
+devmem  0x200f0118 32 0x0
+devmem  0x200f011c 32 0x0
+
+#AUDIO CODEC LINE IN 关闭左声道
+#devmem  0x20050068 32 0xa8022c2c
+#devmem  0x2005006c 32 0xf5035a4a

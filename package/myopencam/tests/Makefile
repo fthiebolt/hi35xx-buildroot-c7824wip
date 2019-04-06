@@ -111,8 +111,12 @@ CFLAGS += -DSNS_GC1024
 endif
 
 ifeq ($(SNS), gc1024)
-LIBS += $(LIB_STAGING_DIR)/libsns_gc1024.a
-CFLAGS += -DSNS_GC1024
+# [apr.19] we don't have source code for gc1024 lib
+#LIBS += $(LIB_STAGING_DIR)/libsns_gc1024.a
+
+# libsns_gc1024.so comes from the original firmware and required libisp
+LIBS_SO += -lmpi -lisp -l_hiae -l_hiawb -lsns_gc1024
+CFLAGS += -fPIC -DSNS_GC1024
 endif
 
 ifeq ($(CONFIG_ISP), y)
@@ -121,7 +125,8 @@ else
 LIBS += $(LIB_STAGING_DIR)/lib_hiae.a
 LIBS += $(LIB_STAGING_DIR)/lib_hiawb.a
 LIBS += $(LIB_STAGING_DIR)/lib_hiaf.a
-CFLAGS += -DISP_V2 -lm
+LIBS += -lm
+CFLAGS += -DISP_V2
 endif
 
 
@@ -138,6 +143,15 @@ AUDIO_LIBS += $(LIB_STAGING_DIR)/libVoiceEngine.a \
 #LIBS += $(LIB_STAGING_DIR)/libjpeg.a
 
 
+#
+# [apr.19] adding flags for mix of static and shared libs
+#ifneq ($(LIBS_SO),)
+#LIBS := -Wl,--whole-archive $(LIBS) -Wl,--no-whole-archive
+#AUDIO_LIBS := -Wl,--whole-archive $(AUDIO_LIBS)
+# notice that gcc makes use of dynamic libs
+#LIBS_SO	:= -Wl,-Bdynamic $(LIBS_SO)
+#endif
+
 TARGET := $(OBJ:%.o=%)
 
 .PHONY : clean all $(SNS)
@@ -145,11 +159,11 @@ TARGET := $(OBJ:%.o=%)
 all: $(TARGET) rtc_test
 
 $(TARGET):%:%.o 
-	$(CC) $(CFLAGS)  -o $@ $^ $(LIBS) $(AUDIO_LIBS) -Wl,-gc-sections
+	$(CC) $(CFLAGS)  -o $@ $^ $(LIBS) $(AUDIO_LIBS) $(LIBS_SO) -Wl,-gc-sections
 	@rm *.o
 
 rtc_test:
-	$(CC) $(CFLAGS) -I./ -o $@ ../kdriver/rtc/rtc_test.c $(LIBS) $(AUDIO_LIBS) -Wl,-gc-sections
+	$(CC) $(CFLAGS) -I./ -o $@ ../kdriver/rtc/rtc_test.c $(LIBS) $(AUDIO_LIBS) $(LIBS_SO) -Wl,-gc-sections
 
 clean:
 	@rm -f $(TARGET)
