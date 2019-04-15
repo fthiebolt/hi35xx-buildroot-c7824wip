@@ -116,14 +116,12 @@ endef
 
 
 define MYOPENCAM_TARGET_INSTALL_LIBRARIES
-#   for f in $(MPPLIB_TO_INSTALL) $(SNSDRV_TO_INSTALL); do \
-#     t=`basename $$f`; \
-#     $(INSTALL) -D -m 0755 $(@D)/$$f \
-#                $(TARGET_DIR)$(HIMPP_PREFIX)/lib/$$t \
-#     || exit 1; \
-#     $(TARGET_STRIP) --strip-all \
-#                $(TARGET_DIR)$(HIMPP_PREFIX)/lib/$$t; \
-#   done
+   for f in $(@D)/lib/*.so; do \
+     t=`basename $$f`; \
+     $(INSTALL) -D -m 0755 $$f \
+                $(TARGET_DIR)/usr/lib/$$t \
+     || exit 1; \
+   done
 endef
 
 
