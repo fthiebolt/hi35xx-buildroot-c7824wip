@@ -151,10 +151,10 @@ insert_ko()
     
     insmod hi3518_vda.ko
     insmod hi3518_ive.ko
-    insmod hi_adc.ko                    #from original
+    #insmod hi_adc.ko                    #from original
 
     insmod extdrv/hi_i2c.ko
-    insmod extdrv/gpio_aplink.ko
+    #insmod extdrv/gpio_aplink.ko        #from original
     #insmod extdrv/gpioi2c.ko
     #insmod extdrv/gpioi2c_ex.ko
     insmod extdrv/pwm.ko
@@ -170,7 +170,7 @@ insert_ko()
 
     # system configuration
     source ./sysctl_hi3518.sh > /dev/null
-    insmod extdrv/hi_rtc.ko
+    #insmod extdrv/hi_rtc.ko             #from original
 }
 
 remove_ko()

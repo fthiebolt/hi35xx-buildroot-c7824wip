@@ -20,7 +20,7 @@ insert_ko()
     insmod ${KOPATH}/hi_adc.ko
     insmod ${KOPATH}/hi_rtc.ko
     insmod ${KOPATH}/gpio_aplink.ko
-    insmod ${KOPATH}/motogpio.ko int_var=1          # from original encoder app
+    insmod ${KOPATH}/motogpio.ko            # from original encoder app
     #modprobe mymotogpio    later ;)
 }
 

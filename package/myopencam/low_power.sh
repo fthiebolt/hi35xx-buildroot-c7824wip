@@ -35,7 +35,7 @@ devmem  0x200b0008 32 0x1
 devmem  0x20030038 32 0x2
 
 # IR
-# [apr.18] we don't want IR ot get disabled
+# [apr.18] we don't want IR to get disabled
 #devmem  0x20070000 32 0x0
 devmem  0x20070000 32 0x1
 
