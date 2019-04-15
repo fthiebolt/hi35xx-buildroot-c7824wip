@@ -21,8 +21,7 @@ REL_LIB?=../lib
 INC_FLAGS:=-I$(REL_INC)
 LIB_FLAGS:=-L$(REL_LIB)
 
-CFLAGS += $(MYOPENCAM_CFLAGS) $(INC_FLAGS) $(LIB_FLAGS) -fPIC -shared -lpthread
-#CFLAGS += $(MYOPENCAM_CFLAGS) $(INC_FLAGS) $(LIB_FLAGS) -lpthread
+CFLAGS += $(MYOPENCAM_CFLAGS) $(INC_FLAGS) $(LIB_FLAGS) -lpthread
 
 LIBS += -lisp
 #LIBS += $(LIB_STAGING_DIR)/libisp.a
