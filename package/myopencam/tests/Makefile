@@ -41,7 +41,8 @@ SNS:=$(MAKECMDGOALS)
                     
 
 ifeq ($(SNS),)
-SNS:=gc1024
+#SNS:=gc1004
+SNS:=gc1024			# vstarcam c7824wip
 endif
 
 ifeq ($(SNS), ar130)
@@ -143,7 +144,7 @@ LIBS += -l_hiae -l_hiawb -l_hiaf
 #LIBS += $(LIB_STAGING_DIR)/lib_hiae.a
 #LIBS += $(LIB_STAGING_DIR)/lib_hiawb.a
 #LIBS += $(LIB_STAGING_DIR)/lib_hiaf.a
-LIBS += -lm
+LIBS += -lm 
 CFLAGS += -DISP_V2
 endif
 

@@ -21,6 +21,7 @@ endif
 export PARAM_FILE
 
 export CC:=$(CROSS)gcc
+#export CC:=$(CROSS)g++
 export AR:=$(CROSS)ar
 
 export MYOPENCAM_CFLAGS:= -Wall
