@@ -6,7 +6,7 @@
 # ar0130 mn34031 imx104 icx692 ov9712 9m034 imx122 mt9p006
 # imx138 soih22 ov2710 himax1375 gc1004 gc1014 ar0330 ar0331
 
-SNS_A=gc1004
+SNS_A=ov9712
 KOPATH="./kdriver"
 
 if [ $# -ge 2 ]; then
